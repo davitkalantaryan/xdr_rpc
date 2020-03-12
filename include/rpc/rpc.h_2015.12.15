@@ -1,0 +1,7 @@
+#ifndef __win_rpc_rpc_h__
+#define __win_rpc_rpc_h__
+
+#include <rpc.h> // Windows standard rpc
+int _rpc_dtablesize(void);
+
+#endif  /* #ifndef __win_rpc_rpc_h__ */

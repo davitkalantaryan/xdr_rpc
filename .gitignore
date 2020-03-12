@@ -1,0 +1,6 @@
+*.[oa]
+*~
+*.obj
+*.pro.user*
+
+sys
