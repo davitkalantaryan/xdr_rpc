@@ -4,3 +4,9 @@
 *.pro.user*
 
 sys
+
+prj/*/*/*
+prj/*/*/.vs
+!prj/*/*/*.sln
+!prj/*/*/*.vcxproj
+!prj/*/*/*.vcxproj.filters
