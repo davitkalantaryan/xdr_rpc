@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <time.h>
 #include <rpc/doocs_rpc_unix_like_functions.h>
+#include <process.h>
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
@@ -109,7 +110,7 @@ int bindresvport(int sd, struct sockaddr_in * sin)
 		return (-1);
 	}
 	if (port == 0) {
-		port = (getpid() % NPORTS) + STARTPORT;
+		port = (_getpid() % NPORTS) + STARTPORT;
 	}
 	res = -1;
 	errno = WSAEADDRINUSE;

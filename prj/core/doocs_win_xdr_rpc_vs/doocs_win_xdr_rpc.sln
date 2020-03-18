@@ -10,6 +10,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "final_doocs_win_xdr_rpc", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "initial_doocs_win_xdr_rpc", "initial_doocs_win_xdr_rpc.vcxproj", "{F060045B-5535-4107-B512-F77FEB809C81}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{67C6B441-46AE-47B1-B431-CB30338B83AB}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\.gitignore = ..\..\..\.gitignore
+		..\..\..\build_lib.bat = ..\..\..\build_lib.bat
+		..\..\..\README.md = ..\..\..\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
