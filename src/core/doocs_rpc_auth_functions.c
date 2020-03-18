@@ -9,29 +9,14 @@
 #include <memory.h>
 #include <time.h>
 #include <sys/timeb.h>
+#include <rpc/doocs_rpc_unix_like_functions.h>
 
 #define bcopy(__a_src__,__a_dst__,__a_n__)	memmove((__a_dst__),(__a_src__),(__a_n__))
-#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
-#define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
-#else
-#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
-#endif
-#if(_MSC_VER >= 1400)
-#define InterlockedCompareExchangePointerNew InterlockedCompareExchangePointer
-#else
-#define InterlockedCompareExchangePointerNew InterlockedCompareExchange
-#endif
 
-static int gettimeofday(struct timeval* tv, struct timezone* tz);
 static bool_t marshal_new_auth(register AUTH* auth);
 
 
 MINI_XDR_BEGIN_C_DECLS
-
-struct timezone{
-	int tz_minuteswest;		/* Minutes west of GMT.  */
-	int tz_dsttime;		/* Nonzero if DST is ever in effect.  */
-};
 
 /*
  * This struct is pointed to by the ah_private field of an auth_handle.
@@ -63,7 +48,7 @@ static struct auth_ops auth_unix_ops = {
  * Create a unix style authenticator.
  * Returns an auth handle with the given stuff in it.
  */
-MINI_XDR_EXPORT
+MINI_XDR_EXPORT_FNL
 AUTH *
 authunix_create(machname, uid, gid, len, aup_gids)
 	char *machname;
@@ -144,6 +129,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
  * XDR an opaque authentication struct
  * (see auth.h)
  */
+MINI_XDR_EXPORT_FNL
 bool_t
 xdr_opaque_auth(xdrs, ap)
 	register XDR *xdrs;
@@ -160,6 +146,7 @@ xdr_opaque_auth(xdrs, ap)
 /*
  * XDR for unix authentication parameters.
  */
+MINI_XDR_EXPORT_FNL
 bool_t
 xdr_authunix_parms(xdrs, p)
 	register XDR *xdrs;
@@ -312,51 +299,4 @@ authunix_validate(auth, verf)
 		marshal_new_auth(auth);
 	}
 	return (TRUE);
-}
-
-
-static int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-	static void* spPointer = NULL;
-	FILETIME ft;
-	unsigned __int64 tmpres = 0;
-#if(_MSC_VER >= 1400)
-	long lnTzTemp;
-	int nldTemp;
-#endif
-
-	if (tv)
-	{
-		GetSystemTimeAsFileTime(&ft);
-
-		tmpres |= ft.dwHighDateTime;
-		tmpres <<= 32;
-		tmpres |= ft.dwLowDateTime;
-
-		tmpres /= 10;  /*convert into microseconds*/
-		/*converting file time to unix epoch*/
-		tmpres -= DELTA_EPOCH_IN_MICROSECS;
-		tv->tv_sec = (long)(tmpres / 1000000UL);
-		tv->tv_usec = (long)(tmpres % 1000000UL);
-	}
-
-	if (tz)
-	{
-		// (setting timezone environmental variable) once
-		if (InterlockedCompareExchangePointerNew(&spPointer, (void*)1, NULL) == NULL)
-		{
-			_tzset();
-		}
-#if(_MSC_VER >= 1400)
-		_get_timezone(&lnTzTemp);
-		tz->tz_minuteswest = lnTzTemp / 60;
-		_get_daylight(&nldTemp);
-		tz->tz_dsttime = nldTemp;
-#else
-		tz->tz_minuteswest = _timezone / 60;
-		tz->tz_dsttime = _daylight;
-#endif
-	}
-
-	return 0;
 }

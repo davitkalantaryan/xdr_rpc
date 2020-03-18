@@ -50,6 +50,18 @@
 #       define MINI_XDR_EXPORT MINI_XDR_IMPORT_FROM_DLL
 #   endif
 
+#if !defined(MINI_XDR_EXPORT_FNL)
+#define MINI_XDR_EXPORT_FNL
+#   endif
+
+#if !defined(MINI_XDR_EXPORT_EXTERN)
+#define MINI_XDR_EXPORT_EXTERN
+#   endif
+
+#if !defined(MINI_XDR_EXPORT_UNIX_LIKE)
+#define MINI_XDR_EXPORT_UNIX_LIKE
+#   endif
+
 #ifdef __cplusplus
 #define MINI_XDR_BEGIN_C_DECLS	extern "C" {
 #define MINI_XDR_EXTERN_C		extern "C"
