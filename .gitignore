@@ -10,3 +10,4 @@ prj/*/*/.vs
 !prj/*/*/*.sln
 !prj/*/*/*.vcxproj
 !prj/*/*/*.vcxproj.filters
+!prj/*/*/*.props

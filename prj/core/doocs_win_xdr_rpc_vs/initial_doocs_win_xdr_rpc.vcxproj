@@ -100,68 +100,76 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\common\common_vs\mini_xdr_rpc_common.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\dll\</OutDir>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(PlatformTarget)\.objects\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>doocs_win_xdr_rpc</TargetName>
+    <TargetName>doocs_win_xdr_rpc.$(MiniXdrRpcVersion)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
