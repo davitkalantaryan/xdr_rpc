@@ -7,6 +7,7 @@
 #define MINI_XDR_RPC_RPC_UNIX_LIKE_FUNCTIONS_H
 
 #include <rpc/wrpc_first_com_include.h>
+#include <rpc/types.h>
 
 MINI_XDR_BEGIN_C_DECLS
 
@@ -31,7 +32,9 @@ MINI_XDR_EXPORT_UNIX_LIKE int gettimeofday(struct timeval* tv, struct timezone* 
 // and unfortunately done with incorrect arguments
 struct timeval* gettimeofday(struct timeval* t, struct timezone* tz);
 #endif
-MINI_XDR_EXPORT_UNIX_LIKE int bindresvport(int sd, struct sockaddr_in* sin);
+MINI_XDR_EXPORT int bindresvport(int sd, struct sockaddr_in* sin);
+MINI_XDR_EXPORT_EXTERN uid_t geteuid(void);
+MINI_XDR_EXPORT_EXTERN gid_t getegid(void);
 
 MINI_XDR_END_C_DECLS
 

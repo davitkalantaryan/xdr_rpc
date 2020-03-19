@@ -13,6 +13,8 @@
 MINI_XDR_BEGIN_C_DECLS
 
 
+int g_nDummyVariable = 1;
+
 
 
 MINI_XDR_END_C_DECLS

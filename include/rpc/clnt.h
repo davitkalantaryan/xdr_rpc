@@ -295,7 +295,7 @@ MINI_XDR_EXPORT CLIENT *clntraw_create __P((u_long __prog, u_long __vers));
  *	u_int vers;	-- version number
  *	char *prot;	-- protocol
  */
-MINI_XDR_EXPORT_FNL CLIENT *clnt_create __P((char *__host, u_int __prog, u_int __vers,char *__prot));
+MINI_XDR_EXPORT CLIENT *clnt_create __P((char *__host, u_int __prog, u_int __vers,char *__prot));
 
 
 /*
@@ -309,7 +309,7 @@ MINI_XDR_EXPORT_FNL CLIENT *clnt_create __P((char *__host, u_int __prog, u_int _
  *	u_int sendsz;
  *	u_int recvsz;
  */
-MINI_XDR_EXPORT_FNL CLIENT *clnttcp_create __P ((struct sockaddr_in *__raddr,u_long __prog, u_long __version,int *__sockp, u_int __sendsz,u_int __recvsz));
+MINI_XDR_EXPORT CLIENT *clnttcp_create __P ((struct sockaddr_in *__raddr,u_long __prog, u_long __version,int *__sockp, u_int __sendsz,u_int __recvsz));
 
 /*
  * UDP based rpc.
@@ -367,7 +367,7 @@ struct rpc_createerr {
 	struct rpc_err cf_error; /* useful when cf_stat == RPC_PMAPFAILURE */
 };
 
-extern MINI_XDR_EXPORT struct rpc_createerr rpc_createerr;
+//extern MINI_XDR_EXPORT struct rpc_createerr rpc_createerr;
 
 
 

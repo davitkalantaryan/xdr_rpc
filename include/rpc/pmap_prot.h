@@ -93,7 +93,7 @@ struct pmap {
 	long unsigned pm_port;
 };
 
-bool_t xdr_pmap __P((XDR *__xdrs, struct pmap *__regs));
+MINI_XDR_EXPORT bool_t xdr_pmap __P((XDR *__xdrs, struct pmap *__regs));
 
 struct pmaplist {
 	struct pmap	pml_map;

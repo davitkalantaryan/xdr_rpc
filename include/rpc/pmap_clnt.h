@@ -91,6 +91,7 @@ enum clnt_stat clnt_broadcast __P((u_long __prog, u_long __vers,
 					   caddr_t __resultsp,
 					   resultproc_t __eachresult));
 
+MINI_XDR_EXPORT
 u_short pmap_getport __P((struct sockaddr_in *__address,
 				  u_long __program, u_long __version,
 				  u_int __protocol));

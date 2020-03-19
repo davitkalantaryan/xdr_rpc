@@ -1,5 +1,5 @@
 //
-// file:			doocs_rpc_xdr_float.c
+// file:			mini_xdr_rpc_missing_functions.c
 //
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/types.h>
