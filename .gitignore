@@ -11,3 +11,4 @@ prj/*/*/.vs
 !prj/*/*/*.vcxproj
 !prj/*/*/*.vcxproj.filters
 !prj/*/*/*.props
+compile_result_*.txt
