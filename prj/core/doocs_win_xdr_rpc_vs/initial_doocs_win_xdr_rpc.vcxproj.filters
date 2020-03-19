@@ -36,6 +36,12 @@
     <ClCompile Include="..\..\..\src\core\doocs_rpc_client_gen.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\core\doocs_rpc_xdr_rec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\doocs_rpc_unix_like_functions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\rpc\auth.h">

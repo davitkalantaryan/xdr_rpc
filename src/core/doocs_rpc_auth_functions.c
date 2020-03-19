@@ -164,10 +164,6 @@ xdr_authunix_parms(xdrs, p)
 	return (FALSE);
 }
 
-
-MINI_XDR_END_C_DECLS
-
-
 static void
 authunix_nextverf(auth)
 struct AUTH_struct* auth;
@@ -300,3 +296,10 @@ authunix_validate(auth, verf)
 	}
 	return (TRUE);
 }
+
+
+/*   variables  */
+MINI_XDR_EXPORT_FNL struct opaque_auth _null_auth;
+
+
+MINI_XDR_END_C_DECLS

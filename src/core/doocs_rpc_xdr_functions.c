@@ -9,11 +9,15 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <memory.h>
+#include <stddef.h>
 
 #define	bzero(__a_s__,__a_size__)			memset((__a_s__),0,(__a_size__))
 #define LASTUNSIGNED						((u_int)0-1)
 #define XDR_FALSE							((long) 0)
 #define XDR_TRUE							((long) 1)
+#define LAST_FRAG							((u_long)(1 << 31))
+
+MINI_XDR_BEGIN_C_DECLS
 
 // let's check endiannes
 //#if !defined(mc68000) && !defined(sparc) && !defined(mips) && !defined(mmax) && !defined(_M_IX86) && !defined(_M_ARM) && !defined(_M_ARM64) && !defined(_M_AMD64)
@@ -53,9 +57,22 @@ static struct dbl_limits {
 };
 #endif
 
-MINI_XDR_BEGIN_C_DECLS
 
-MINI_XDR_EXPORT bool_t
+/*
+ * XDR nothing
+ */
+MINI_XDR_EXPORT
+bool_t
+xdr_void(XDR *xdrs)
+	/* XDR *xdrs; */
+	/* caddr_t addr; */
+{
+
+	return (TRUE);
+}
+
+MINI_XDR_EXPORT 
+bool_t
 xdr_int(xdrs, ip)
 XDR* xdrs;
 int* ip;
@@ -551,6 +568,7 @@ static char xdr_zero[BYTES_PER_XDR_UNIT] = { 0, 0, 0, 0 };
  * Allows the specification of a fixed size sequence of opaque bytes.
  * cp points to the opaque object and cnt gives the byte length.
  */
+MINI_XDR_EXPORT
 bool_t
 xdr_opaque(xdrs, cp, cnt)
 	register XDR *xdrs;
@@ -602,6 +620,7 @@ xdr_opaque(xdrs, cp, cnt)
 /*
  * XDR unsigned short integers
  */
+MINI_XDR_EXPORT
 bool_t
 xdr_u_short(xdrs, usp)
 	register XDR *xdrs;
@@ -632,6 +651,7 @@ xdr_u_short(xdrs, usp)
 /*
  * XDR an unsigned char
  */
+MINI_XDR_EXPORT
 bool_t
 xdr_u_char(xdrs, cp)
 	XDR *xdrs;
@@ -658,6 +678,7 @@ xdr_u_char(xdrs, cp)
  * > elemsize: size of each element
  * > xdr_elem: routine to XDR each element
  */
+MINI_XDR_EXPORT
 bool_t
 xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 	register XDR *xdrs;
@@ -680,6 +701,7 @@ xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 }
 
 
+MINI_XDR_EXPORT
 bool_t
 xdr_float(xdrs, fp)
 	register XDR *xdrs;
@@ -747,6 +769,7 @@ xdr_float(xdrs, fp)
 }
 
 
+MINI_XDR_EXPORT
 bool_t
 xdr_double(xdrs, dp)
 	register XDR *xdrs;
@@ -832,7 +855,6 @@ xdr_double(xdrs, dp)
 	}
 	return (FALSE);
 }
-
 
 
 

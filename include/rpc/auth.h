@@ -144,7 +144,7 @@ typedef struct AUTH_struct AUTH;
 #define auth_destroy AUTH_DESTROY
 
 
-extern MINI_XDR_EXPORT struct opaque_auth _null_auth;
+extern MINI_XDR_EXPORT_FNL struct opaque_auth _null_auth;
 
 
 /*
