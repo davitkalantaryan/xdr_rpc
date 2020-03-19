@@ -29,6 +29,7 @@ writetcp(struct ct_data* ct, caddr_t buf, int len);
 
 MINI_XDR_BEGIN_C_DECLS
 
+
 static enum clnt_stat	clnttcp_call(CLIENT*, u_long, xdrproc_t, caddr_t, xdrproc_t, caddr_t, struct timeval);
 static void		clnttcp_abort(CLIENT*);
 static void		clnttcp_geterr(CLIENT*, struct rpc_err*);

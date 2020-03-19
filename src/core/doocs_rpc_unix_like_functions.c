@@ -27,7 +27,7 @@
 
 MINI_XDR_BEGIN_C_DECLS
 
-#ifndef gettimeofday_is_not_needed
+#ifdef gettimeofday_is_needed
 // todo:
 // maybe this function we will need also for DOOCS
 // for time being this static

@@ -24,8 +24,13 @@ struct timezone
 };
 #endif  // #ifndef timezone_not_needed
 
-
+#ifdef gettimeofday_is_needed
 MINI_XDR_EXPORT_UNIX_LIKE int gettimeofday(struct timeval* tv, struct timezone* tz);
+#else
+// in the case of doocs this is done in the tine
+// and unfortunately done with incorrect arguments
+struct timeval* gettimeofday(struct timeval* t, struct timezone* tz);
+#endif
 MINI_XDR_EXPORT_UNIX_LIKE int bindresvport(int sd, struct sockaddr_in* sin);
 
 MINI_XDR_END_C_DECLS
