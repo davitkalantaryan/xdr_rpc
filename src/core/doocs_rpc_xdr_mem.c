@@ -51,7 +51,7 @@ xdrmem_create(xdrs, addr, size, op)
 {
 
 	xdrs->x_op = op;
-	xdrs->x_ops = &xdrmem_ops;
+	xdrs->x_ops = 0;
 	xdrs->x_private = xdrs->x_base = addr;
 	xdrs->x_handy = size;
 }
