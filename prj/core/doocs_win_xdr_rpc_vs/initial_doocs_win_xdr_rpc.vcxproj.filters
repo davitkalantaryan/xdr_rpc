@@ -22,80 +22,6 @@
     <Filter Include="Source Files\core">
       <UniqueIdentifier>{4b2cf17d-4d13-4429-8f27-9c44dfa59b12}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\tmp">
-      <UniqueIdentifier>{7c2c9d08-c870-480b-8757-875cea4f468f}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\src\tmp\xdr.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\xdr_array.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\xdr_float.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\clnt_per.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\xdr_reference.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\clnt_gen.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\clnt_tcp.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\clnt_udp.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\xdr_mem.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\xdr_rec.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\pmap_get.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\rpc_prot.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\auth_non.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\mini_xdr_rpc_missing_functions.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_auth_functions.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_client_gen.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_entry.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_unix_like_functions.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_xdr_functions.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_xdr_mem.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\doocs_rpc_xdr_rec.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\core\empty_template_doocs_rpc_xxx.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\tmp\mini_xdr_rpc_entry.c">
-      <Filter>Source Files\tmp</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\rpc\auth.h">
@@ -158,13 +84,63 @@
     <ClInclude Include="..\..\..\include\rpc\redirected_win_rpc.h">
       <Filter>Header Files\include\rpc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\tmp\mini_xdr_rpc_src_private.h">
-      <Filter>Source Files\tmp</Filter>
+    <ClInclude Include="..\..\..\src\core\mini_xdr_rpc_src_private.h">
+      <Filter>Source Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\include\rpc\rpc.h_2015.12.15">
       <Filter>Header Files\include\rpc</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\core\auth_non.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\auth_uni.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\clnt_gen.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\clnt_per.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\clnt_tcp.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\clnt_udp.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\mini_xdr_rpc_entry.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\mini_xdr_rpc_missing_functions.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\pmap_get.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\rpc_prot.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\xdr.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\xdr_array.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\xdr_float.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\xdr_mem.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\xdr_rec.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\xdr_reference.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
