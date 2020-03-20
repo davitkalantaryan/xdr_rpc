@@ -69,7 +69,7 @@ struct authunix_parms
     gid_t *aup_gids;
   };
 
-MINI_XDR_EXPORT_FNL bool_t xdr_authunix_parms __P((struct XDRstruct *__xdrs,struct authunix_parms *__p));
+MINI_XDR_EXPORT bool_t xdr_authunix_parms __P((struct XDRstruct *__xdrs,struct authunix_parms *__p));
 
 /*
  * If a response verifier has flavor AUTH_SHORT,

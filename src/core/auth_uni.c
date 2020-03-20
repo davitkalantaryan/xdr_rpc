@@ -104,7 +104,7 @@ struct audata {
  * Create a unix style authenticator.
  * Returns an auth handle with the given stuff in it.
  */
-MINI_XDR_EXPORT_FNL
+MINI_XDR_EXPORT
 AUTH *
 authunix_create(machname, uid, gid, len, aup_gids)
 	char *machname;
@@ -183,6 +183,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
  * Returns an auth handle with parameters determined by doing lots of
  * syscalls.
  */
+#if 0
 MINI_XDR_EXPORT_FNL
 AUTH *
 authunix_create_default(void)
@@ -209,6 +210,25 @@ authunix_create_default(void)
 		abort();
 #endif
 	return (authunix_create(machname, uid, gid, len, gids));
+}
+#endif
+
+MINI_XDR_EXPORT
+bool_t
+xdr_authunix_parms(xdrs, p)
+register XDR* xdrs;
+register struct authunix_parms* p;
+{
+
+	if (xdr_u_long(xdrs, &(p->aup_time))
+		&& xdr_string(xdrs, &(p->aup_machname), MAX_MACHINE_NAME)
+		&& xdr_int(xdrs, &(p->aup_uid))
+		&& xdr_int(xdrs, &(p->aup_gid))
+		&& xdr_array(xdrs, (caddr_t*) & (p->aup_gids),
+			&(p->aup_len), NGRPS, sizeof(int), xdr_int)) {
+		return (TRUE);
+	}
+	return (FALSE);
 }
 
 /*
