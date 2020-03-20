@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="other">
+      <UniqueIdentifier>{14b42a9c-07f7-4be4-88d7-463563c59c6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="other\src">
+      <UniqueIdentifier>{90ecbca2-80cc-41f8-8ecf-0751eb36535c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="other\src\core">
+      <UniqueIdentifier>{22e4ed17-8779-445e-bb20-975bd8323747}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\core\auth_non.c">
@@ -122,5 +131,27 @@
     <ClInclude Include="..\..\..\include\rpc\xdr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\build_lib.bat">
+      <Filter>other</Filter>
+    </None>
+    <None Include="..\..\..\.gitignore">
+      <Filter>other</Filter>
+    </None>
+    <None Include="..\..\..\meson.build">
+      <Filter>other</Filter>
+    </None>
+    <None Include="..\..\..\README.md">
+      <Filter>other</Filter>
+    </None>
+    <None Include="..\..\..\src\core\meson.build">
+      <Filter>other\src\core</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\..\compile_result_arm.txt">
+      <Filter>other</Filter>
+    </Text>
   </ItemGroup>
 </Project>

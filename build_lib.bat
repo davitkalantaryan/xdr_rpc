@@ -33,7 +33,7 @@ for %%x in (%*) do (
 echo action=%ActionConfirm%,platform=%PlatformTarget%,configuration=%Configuration%
 ::exit /b 0
 
-msbuild %scriptDirectory%prj\core\doocs_win_xdr_rpc_vs\doocs_win_xdr_rpc.sln /t:Build /p:Configuration=%Configuration% /p:Platform=%PlatformTarget%
+msbuild %scriptDirectory%prj\core\doocs_xdr_rpc_vs\doocs_xdr_rpc.sln /t:!ActionConfirm! /p:Configuration=!Configuration! /p:Platform=!PlatformTarget!
 
 :parse_argument
 	set isNextArgPlatform=true
