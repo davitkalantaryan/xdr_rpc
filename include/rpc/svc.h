@@ -167,7 +167,9 @@ struct svc_req {
  *	void (*dispatch)();
  *	u_long protocol;  like TCP or UDP, zero means do not register
  */
-MINI_XDR_EXPORT bool_t	svc_register __P((SVCXPRT *__xprt, u_long __prog,
+MINI_XDR_EXPORT 
+bool_t	
+svc_register __P((SVCXPRT *__xprt, u_long __prog,
 				   u_long __vers, void (*__dispatch)
 				   __P ((struct svc_req *, SVCXPRT *)),
 				   u_long __protocol));
@@ -226,22 +228,13 @@ MINI_XDR_EXPORT void	xprt_unregister __P((SVCXPRT *__xprt));
  * deadlock the caller and server processes!
  */
 
-MINI_XDR_EXPORT bool_t	svc_sendreply __P((SVCXPRT *xprt, xdrproc_t __xdr_results,
-				    caddr_t __xdr_location));
-
+MINI_XDR_EXPORT bool_t	svc_sendreply __P((SVCXPRT *xprt, xdrproc_t __xdr_results,caddr_t __xdr_location));
 MINI_XDR_EXPORT void	svcerr_decode __P((SVCXPRT *__xprt));
-
 MINI_XDR_EXPORT void	svcerr_weakauth __P((SVCXPRT *__xprt));
-
 MINI_XDR_EXPORT void	svcerr_noproc __P((SVCXPRT *__xprt));
-
-MINI_XDR_EXPORT void	svcerr_progvers __P((SVCXPRT *__xprt, u_long __low_vers,
-				      u_long __high_vers));
-
+MINI_XDR_EXPORT void	svcerr_progvers __P((SVCXPRT *__xprt, u_long __low_vers,u_long __high_vers));
 MINI_XDR_EXPORT void	svcerr_auth __P((SVCXPRT *__xprt, enum auth_stat __why));
-
 MINI_XDR_EXPORT void	svcerr_noprog __P((SVCXPRT *__xprt));
-
 MINI_XDR_EXPORT void	svcerr_systemerr __P((SVCXPRT *__xprt));
 
 /*
@@ -293,14 +286,12 @@ MINI_XDR_EXPORT SVCXPRT *svcraw_create __P((void));
  * Udp based rpc.
  */
 MINI_XDR_EXPORT SVCXPRT *svcudp_create __P((int __sock));
-MINI_XDR_EXPORT SVCXPRT *svcudp_bufcreate __P((int __sock, u_int __sendsz,
-				       u_int __recvsz));
+MINI_XDR_EXPORT SVCXPRT *svcudp_bufcreate __P((int __sock, u_int __sendsz,u_int __recvsz));
 
 /*
  * Tcp based rpc.
  */
-MINI_XDR_EXPORT SVCXPRT *svctcp_create __P((int __sock, u_int __sendsize,
-				    u_int __recvsize));
+MINI_XDR_EXPORT SVCXPRT *svctcp_create __P((int __sock, u_int __sendsize,u_int __recvsize));
 
 
 MINI_XDR_END_C_DECLS

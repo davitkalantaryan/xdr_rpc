@@ -46,8 +46,7 @@ MINI_XDR_BEGIN_C_DECLS
 /*
  * Server side authenticator
  */
- MINI_XDR_EXPORT enum auth_stat _authenticate __P((struct svc_req *__rqst,
-					  struct rpc_msg *__msg));
+ MINI_XDR_EXPORT enum auth_stat _authenticate __P((struct svc_req *__rqst,struct rpc_msg *__msg));
 
 MINI_XDR_END_C_DECLS
 

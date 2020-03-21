@@ -66,8 +66,6 @@ static char sccsid[] = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 
 MINI_XDR_BEGIN_C_DECLS
 
-struct opaque_auth _null_auth;
-
 /*
  * XDR an opaque authentication struct
  * (see auth.h)
@@ -309,5 +307,9 @@ _seterr_reply(msg, error)
 		break;
 	}
 }
+
+
+/*///////////////// hidden globals /////////////////////*/
+MINI_XDR_DLL_PRIVATE struct opaque_auth _null_auth;
 
 MINI_XDR_END_C_DECLS

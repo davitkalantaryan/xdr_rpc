@@ -39,8 +39,7 @@ MINI_XDR_EXPORT int getpublickey __P((__const char *__name, char *__key));
    up to MAXNETNAMELEN bytes long and the destination buffer KEY
    should have HEXKEYBATES + 1 bytes long to fit all characters from
    the key.  */
-MINI_XDR_EXPORT int getsecretkey __P((__const char *__name, char *__key,
-			      __const char *__passwd));
+MINI_XDR_EXPORT int getsecretkey __P((__const char *__name, char *__key,__const char *__passwd));
 
 MINI_XDR_END_C_DECLS
 

@@ -98,22 +98,13 @@
     <ClInclude Include="..\..\..\include\rpc\pmap_prot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\rpc\pmap_rmt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\rpc\redirected_win_rpc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\rpc\rpc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\rpc\rpc_com.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\rpc\rpc_msg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\include\rpc\rpcb_prot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\rpc\svc.h">

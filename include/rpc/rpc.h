@@ -67,7 +67,8 @@
 
 MINI_XDR_BEGIN_C_DECLS
 
-MINI_XDR_EXPORT int _rpc_dtablesize(void);
+// todo: delete from here
+//MINI_XDR_EXPORT int _rpc_dtablesize(void);
 
 MINI_XDR_END_C_DECLS
 

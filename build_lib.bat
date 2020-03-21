@@ -18,22 +18,27 @@ set PlatformTarget=x64
 set Configuration=Debug
 set ActionConfirm=Build
 
-SET  scriptDirectory=%~dp0
-set  currentDirectory=%cd%
+set scriptName=%0
+SET scriptDirectory=%~dp0
+set currentDirectory=%cd%
 
 :: handling arguments
 ::set argC=0
 ::for %%x in (%*) do Set /A argC+=1
-set nextArg=%0
+set nextArg=%scriptName%
 for %%x in (%*) do (
+	if /i "%%x"=="help" (
+		call :call_help
+		exit /b 0
+	)
 	set nextArg=%%x
 	call :parse_argument
+	if not "!ERRORLEVEL!"=="0" (exit /b %ERRORLEVEL%)
 )
 
 echo action=%ActionConfirm%,platform=%PlatformTarget%,configuration=%Configuration%
-::exit /b 0
-
 msbuild %scriptDirectory%prj\core\doocs_xdr_rpc_vs\doocs_xdr_rpc.sln /t:!ActionConfirm! /p:Configuration=!Configuration! /p:Platform=!PlatformTarget!
+exit /b 0
 
 :parse_argument
 	set isNextArgPlatform=true
@@ -46,13 +51,19 @@ msbuild %scriptDirectory%prj\core\doocs_xdr_rpc_vs\doocs_xdr_rpc.sln /t:!ActionC
 			if /i not "!nextArg!"=="Debug" if /i not "!nextArg!"=="Release" (set isNextArgConfiguration=false)
 			if "!isNextArgConfiguration!"=="true" (set Configuration=!nextArg!) else (
 				echo Unknown argument !nextArg!.
-				echo Valid platforms are ARM, ARM64, x86 and x64. Using defalt x64.
-				echo Valid configurations are Debug and Release. Using default Debug.
-				echo Valid actions are Build, Rebuild and Clen. Using default Build.
+				call :call_help
+				exit /b 1
 			)
 		)		
 	)
 
+	exit /b 0
+
+:call_help
+	echo Valid platforms are ARM, ARM64, x86 and x64. Using defalt x64.
+	echo Valid configurations are Debug and Release. Using default Debug.
+	echo Valid actions are Build, Rebuild and Clen. Using default Build.
+	echo Call !scriptName! help to displaye help message
 	exit /b 0
 
 ENDLOCAL

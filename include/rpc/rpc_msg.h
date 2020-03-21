@@ -194,8 +194,7 @@ MINI_XDR_EXPORT bool_t	xdr_replymsg __P((XDR *__xdrs, struct rpc_msg *__rmsg));
  * 	struct rpc_msg *msg;
  * 	struct rpc_err *error;
  */
-MINI_XDR_EXPORT void	_seterr_reply __P((struct rpc_msg *__msg,
-				    struct rpc_err *__error));
+MINI_XDR_EXPORT void	_seterr_reply __P((struct rpc_msg *__msg,struct rpc_err *__error));
 
 MINI_XDR_END_C_DECLS
 

@@ -367,8 +367,6 @@ struct rpc_createerr {
 	struct rpc_err cf_error; /* useful when cf_stat == RPC_PMAPFAILURE */
 };
 
-//extern MINI_XDR_EXPORT struct rpc_createerr rpc_createerr;
-
 
 
 /*

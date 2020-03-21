@@ -263,26 +263,18 @@ MINI_XDR_EXPORT bool_t	xdr_short __P((XDR *__xdrs, short *__sp));
 MINI_XDR_EXPORT bool_t	xdr_u_short __P((XDR *__xdrs, u_short *__usp));
 MINI_XDR_EXPORT bool_t	xdr_bool __P((XDR *__xdrs, bool_t *__bp));
 MINI_XDR_EXPORT bool_t	xdr_enum __P((XDR *__xdrs, enum_t *__ep));
-MINI_XDR_EXPORT bool_t	xdr_array __P((XDR *_xdrs, caddr_t *__addrp, u_int *__sizep,
-				u_int __maxsize, u_int __elsize,
-				xdrproc_t __elproc));
-MINI_XDR_EXPORT bool_t	xdr_bytes __P((XDR *__xdrs, char **__cpp, u_int *__sizep,
-				u_int __maxsize));
+MINI_XDR_EXPORT bool_t	xdr_array __P((XDR *_xdrs, caddr_t *__addrp, u_int *__sizep,u_int __maxsize, u_int __elsize,xdrproc_t __elproc));
+MINI_XDR_EXPORT bool_t	xdr_bytes __P((XDR *__xdrs, char **__cpp, u_int *__sizep,u_int __maxsize));
 MINI_XDR_EXPORT bool_t	xdr_opaque __P((XDR *__xdrs, caddr_t __cp, u_int __cnt));
 MINI_XDR_EXPORT bool_t	xdr_string __P((XDR *__xdrs, char **__cpp, u_int __maxsize));
-MINI_XDR_EXPORT bool_t	xdr_union __P((XDR *__xdrs, enum_t *__dscmp, char *__unp,
-				struct xdr_discrim *__choices,
-				xdrproc_t dfault));
+MINI_XDR_EXPORT bool_t	xdr_union __P((XDR *__xdrs, enum_t *__dscmp, char *__unp,struct xdr_discrim *__choices,xdrproc_t dfault));
 MINI_XDR_EXPORT bool_t	xdr_char __P((XDR *__xdrs, char *__cp));
 MINI_XDR_EXPORT bool_t	xdr_u_char __P((XDR *__xdrs, u_char *__cp));
-MINI_XDR_EXPORT bool_t	xdr_vector __P((XDR *__xdrs, char *__basep, u_int __nelem,
-				 u_int __elemsize, xdrproc_t __xdr_elem));
+MINI_XDR_EXPORT bool_t	xdr_vector __P((XDR *__xdrs, char *__basep, u_int __nelem,u_int __elemsize, xdrproc_t __xdr_elem));
 MINI_XDR_EXPORT bool_t	xdr_float __P((XDR *__xdrs, float *__fp));
 MINI_XDR_EXPORT bool_t	xdr_double __P((XDR *__xdrs, double *__dp));
-MINI_XDR_EXPORT bool_t	xdr_reference __P((XDR *__xdrs, caddr_t *__xpp, u_int __size,
-				    xdrproc_t __proc));
-MINI_XDR_EXPORT bool_t	xdr_pointer __P((XDR *__xdrs, char **__objpp,
-				  u_int __obj_size, xdrproc_t __xdr_obj));
+MINI_XDR_EXPORT bool_t	xdr_reference __P((XDR *__xdrs, caddr_t *__xpp, u_int __size,xdrproc_t __proc));
+MINI_XDR_EXPORT bool_t	xdr_pointer __P((XDR *__xdrs, char **__objpp,u_int __obj_size, xdrproc_t __xdr_obj));
 MINI_XDR_EXPORT bool_t	xdr_wrapstring __P((XDR *__xdrs, char **__cpp));
 
 /*
@@ -303,15 +295,15 @@ MINI_XDR_EXPORT bool_t   xdr_netobj __P((XDR *__xdrs, struct netobj *__np));
  */
 
 /* XDR using memory buffers */
-MINI_XDR_EXPORT void   xdrmem_create __P((XDR *__xdrs, caddr_t __addr, u_int __size,
-				  enum xdr_op __xop));
+MINI_XDR_EXPORT void   xdrmem_create __P((XDR *__xdrs, caddr_t __addr, u_int __size,enum xdr_op __xop));
 
 /* XDR using stdio library */
-MINI_XDR_EXPORT void   xdrstdio_create __P((XDR *__xdrs, FILE *__file,
-				    enum xdr_op __xop));
+MINI_XDR_EXPORT void   xdrstdio_create __P((XDR *__xdrs, FILE *__file,enum xdr_op __xop));
 
 /* XDR pseudo records for tcp */
-MINI_XDR_EXPORT void   xdrrec_create __P((XDR *__xdrs, u_int __sendsize,
+MINI_XDR_EXPORT 
+void
+xdrrec_create __P((XDR *__xdrs, u_int __sendsize,
 				  u_int __recvsize, caddr_t __tcp_handle,
 				  int (*__readit) (), int (*__writeit) ()));
 
@@ -332,8 +324,9 @@ MINI_XDR_END_C_DECLS
 
 #if defined(__cplusplus) & defined(_WIN64)
 
-MINI_XDR_EXPORT bool_t xdr_long(XDR *a_xdrs, ptrdiff_t *a_lp);
-MINI_XDR_EXPORT bool_t xdr_u_long(XDR* a_xdrs, size_t * a_lp);
+// todo: think on this
+//MINI_XDR_EXPORT bool_t xdr_long(XDR *a_xdrs, ptrdiff_t *a_lp);
+//MINI_XDR_EXPORT bool_t xdr_u_long(XDR* a_xdrs, size_t * a_lp);
 
 #endif  // #if defined(__cplusplus) & defined(_WIN64)
 

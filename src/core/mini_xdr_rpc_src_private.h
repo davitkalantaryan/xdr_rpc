@@ -1,5 +1,5 @@
 //
-// file:			
+// file:			mini_xdr_rpc_src_private.h
 // created on:		2020 Mar 19
 // created by:		D. Kalantaryan
 // 
@@ -46,6 +46,7 @@ MINI_XDR_BEGIN_C_DECLS
 #define strncat(_strDest,_strSource,_count)	strncat_s((_strDest),(_count),(_strSource),(_count))
 
 extern MINI_XDR_DLL_PRIVATE struct rpc_createerr		rpc_createerr;
+extern MINI_XDR_DLL_PRIVATE struct opaque_auth			_null_auth;
 
 MINI_XDR_END_C_DECLS
 

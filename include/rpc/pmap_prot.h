@@ -100,7 +100,7 @@ struct pmaplist {
 	struct pmaplist *pml_next;
 };
 
-bool_t xdr_pmaplist __P((XDR *__xdrs, struct pmaplist **__rp));
+MINI_XDR_EXPORT bool_t xdr_pmaplist __P((XDR *__xdrs, struct pmaplist **__rp));
 
 MINI_XDR_END_C_DECLS
 

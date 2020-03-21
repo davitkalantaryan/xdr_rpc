@@ -53,7 +53,8 @@ static char sccsid[] = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
-#include <malloc.h> 
+#include <malloc.h>
+#include "mini_xdr_rpc_src_private.h"
 
 #define MAX_MARSHEL_SIZE 20
 

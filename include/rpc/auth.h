@@ -72,13 +72,14 @@ enum auth_stat {
 
 union des_block {
 	struct {
-		__uint32_t high;
-		__uint32_t low;
+		uint32_t high;
+		uint32_t low;
 	} key;
 	char c[8];
 };
 typedef union des_block des_block;
-MINI_XDR_EXPORT bool_t xdr_des_block();
+// todo: will be deleted
+//MINI_XDR_EXPORT bool_t xdr_des_block();
 
 /*
  * Authentication info.  Opaque to client.
@@ -142,9 +143,6 @@ typedef struct AUTH_struct AUTH;
 //#define auth_destroy(auth)		\
 //		((*((auth)->ah_ops->ah_destroy))())
 #define auth_destroy AUTH_DESTROY
-
-
-extern MINI_XDR_EXPORT_FNL struct opaque_auth _null_auth;
 
 
 /*

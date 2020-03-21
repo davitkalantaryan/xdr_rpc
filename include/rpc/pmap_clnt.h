@@ -44,7 +44,7 @@
 
 MINI_XDR_BEGIN_C_DECLS
 
-typedef bool_t (*resultproc_t)();
+typedef bool_t (*resultproc_t)(void);
 
 /*
  * Usage:
@@ -68,14 +68,13 @@ typedef bool_t (*resultproc_t)();
  *		address if the responder to the broadcast.
  */
 
-bool_t pmap_set __P((u_long __program, u_long __version,
-			     int __protocol, u_short __port));
+MINI_XDR_EXPORT bool_t pmap_set __P((u_long __program, u_long __version,int __protocol, u_short __port));
 
-bool_t pmap_unset __P((u_long __program, u_long __version));
+MINI_XDR_EXPORT bool_t pmap_unset __P((u_long __program, u_long __version));
 
-struct pmaplist *pmap_getmaps __P((struct sockaddr_in *__address));
+MINI_XDR_EXPORT struct pmaplist *pmap_getmaps __P((struct sockaddr_in *__address));
 
-//WRPC_API_FAR
+MINI_XDR_EXPORT
 enum clnt_stat pmap_rmtcall __P((struct sockaddr_in *__addr,
 					 u_long __prog, u_long __vers,
 					 u_long __proc, xdrproc_t __xdrargs,
@@ -83,7 +82,7 @@ enum clnt_stat pmap_rmtcall __P((struct sockaddr_in *__addr,
 					 caddr_t __resp, struct timeval __tout,
 					 u_long *__port_ptr));
 
-//WRPC_API_FAR 
+MINI_XDR_EXPORT
 enum clnt_stat clnt_broadcast __P((u_long __prog, u_long __vers,
 					   u_long __proc, xdrproc_t __xargs,
 					   caddr_t __argsp,

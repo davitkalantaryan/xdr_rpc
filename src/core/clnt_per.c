@@ -80,7 +80,7 @@ static void clnt_per_cleanup(void)
 {
 	int i = 0;
 	struct SMemoryListItem *pBufItem, * pBufItemNext;
-	WaitForSingleObject(s_mutexForList,INFINITE);
+	//WaitForSingleObject(s_mutexForList,INFINITE); // better without mutex
 	pBufItem = s_pMemListFirst;
 	while(pBufItem){
 		pBufItemNext = pBufItem->next;
@@ -89,7 +89,7 @@ static void clnt_per_cleanup(void)
 		pBufItem = pBufItemNext;
 	}
 	s_mutexForList = NULL;
-	ReleaseMutex(s_mutexForList);
+	//ReleaseMutex(s_mutexForList); // better without mutex
 
 	TlsFree(s_tlsIndexForBuff);
 	s_tlsIndexForBuff = 0;
