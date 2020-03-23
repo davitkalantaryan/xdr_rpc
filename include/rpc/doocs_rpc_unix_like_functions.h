@@ -25,7 +25,7 @@ struct timezone
 };
 #endif  // #ifndef timezone_not_needed
 
-#ifndef gettimeofday_is_not_needed
+#if defined(gettimeofday_is_needed) || defined(MINI_XDR_COMPILING_SHARED_LIB)
 MINI_XDR_EXPORT_UNIX_LIKE int gettimeofday(struct timeval* tv, struct timezone* tz);
 #else
 // in the case of doocs this is done in the tine
