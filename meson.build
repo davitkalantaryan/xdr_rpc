@@ -20,9 +20,9 @@ minirpc_dep = declare_dependency(
     link_with : librpc,
 )
 
-minirpc_static_dep = declare_dependency(
-    dependencies : deps,
-    link_with : librpc_static,
-)
+#minirpc_static_dep = declare_dependency(
+#    dependencies : deps,
+#    link_with : librpc_static,
+#)
 
 # vi:ts=4:sw=4:sts=4:et:syn=conf
