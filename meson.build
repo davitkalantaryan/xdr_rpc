@@ -1,4 +1,4 @@
-project('mini-xdr-rpc', 'c',
+project('doocs-xdr-rpc', 'c',
     version : '1.0',
     default_options : [
         #'c_std=c',
