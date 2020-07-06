@@ -1,4 +1,4 @@
-project('mini-xdr-rpc', 'c',
+project('doocs-xdr-rpc', 'c',
     version : '1.0',
     default_options : [
         #'c_std=c',
@@ -20,9 +20,9 @@ minirpc_dep = declare_dependency(
     link_with : librpc,
 )
 
-minirpc_static_dep = declare_dependency(
-    dependencies : deps,
-    link_with : librpc_static,
-)
+#minirpc_static_dep = declare_dependency(
+#    dependencies : deps,
+#    link_with : librpc_static,
+#)
 
 # vi:ts=4:sw=4:sts=4:et:syn=conf
