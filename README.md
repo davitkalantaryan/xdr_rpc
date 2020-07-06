@@ -23,7 +23,7 @@ build_lib.bat
  
  
  ## notes  
- Probably later on when we will switch to compilation of DOOCS server library we will need to have static library, because the code for auth and client_* depends on getuid, getid functions, that will be implemented later.  
+ Probably later on when we will switch to compilation of DOOCS server library we will need to have static library, because the code for auth depends on getuid, getid functions, that will be implemented later.  
 On windows this possible to do (at least to my knowledge) only with static library.  
  Currently for DOOCS client library we do not use any XDR RPC function that requires getuid, getgid familiy functions.
  
