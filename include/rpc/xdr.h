@@ -108,14 +108,14 @@ enum xdr_op {
 typedef struct XDRstruct{
 	enum xdr_op	x_op;		/* operation; fast additional param */
 	struct xdr_ops {
-		bool_t(*x_getlong)(struct XDRstruct*, register long*);	/* get a long from underlying stream */
+		bool_t(*x_getlong)(struct XDRstruct*, long*);	/* get a long from underlying stream */
 		bool_t(*x_putlong)(struct XDRstruct *, long*);	/* put a long to " */
 		bool_t(*x_getbytes)(struct XDRstruct *, caddr_t, u_int);/* get some bytes from " */
 		bool_t(*x_putbytes)(struct XDRstruct *, caddr_t, u_int);/* put some bytes to " */
 		u_int(*x_getpostn)(struct XDRstruct *);/* returns bytes off from beginning */
 		bool_t(*x_setpostn)(struct XDRstruct *, u_int);/* lets you reposition the stream */
 		long *	(*x_inline)(struct XDRstruct *, u_int);	/* buf quick ptr to buffered data */
-		void(*x_destroy)(register struct XDRstruct *);	/* free privates of this xdr_stream */
+		void(*x_destroy)(struct XDRstruct *);	/* free privates of this xdr_stream */
 	} *x_ops;
 	caddr_t 	x_public;	/* users' data */
 	caddr_t		x_private;	/* pointer to private data */
