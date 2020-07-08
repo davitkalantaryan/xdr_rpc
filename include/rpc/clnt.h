@@ -305,7 +305,7 @@ MINI_XDR_EXPORT CLIENT *clnt_create __P((char *__host, u_int __prog, u_int __ver
  *	struct sockaddr_in *raddr;
  *	u_long prog;
  *	u_long version;
- *	register int *sockp;
+ *	int *sockp;
  *	u_int sendsz;
  *	u_int recvsz;
  */

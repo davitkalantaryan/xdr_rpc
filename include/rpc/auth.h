@@ -100,9 +100,9 @@ struct AUTH_struct{
 	struct auth_ops {
 		void(*ah_nextverf)(struct AUTH_struct*);
 		int(*ah_marshal)(struct AUTH_struct*, struct XDRstruct*);	/* nextverf & serialize */
-		int(*ah_validate)(register struct AUTH_struct*, struct opaque_auth*);	/* validate verifier */
-		int(*ah_refresh)(register struct AUTH_struct *);	/* refresh credentials */
-		void(*ah_destroy)(register struct AUTH_struct*);	/* destroy this structure */
+		int(*ah_validate)(struct AUTH_struct*, struct opaque_auth*);	/* validate verifier */
+		int(*ah_refresh)(struct AUTH_struct *);	/* refresh credentials */
+		void(*ah_destroy)(struct AUTH_struct*);	/* destroy this structure */
 	} *ah_ops;
 	caddr_t ah_private;
 } ;
@@ -179,7 +179,7 @@ MINI_XDR_EXPORT AUTH *authdes_create(void);
 MINI_XDR_EXPORT bool_t xdr_opaque_auth(struct XDRstruct * , struct opaque_auth *) __THROW;
 MINI_XDR_EXPORT_FNL AUTH *authunix_create_default(void);
 MINI_XDR_EXPORT AUTH *authnone_create(void) __THROW;
-MINI_XDR_EXPORT AUTH * authunix_create(char* machname, uid_t uid, gid_t gid, register int len, gid_t * aup_gids);
+MINI_XDR_EXPORT AUTH * authunix_create(char* machname, uid_t uid, gid_t gid, int len, gid_t * aup_gids);
 
 MINI_XDR_END_C_DECLS
 
