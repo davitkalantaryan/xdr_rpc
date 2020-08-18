@@ -36,9 +36,12 @@
 #define __TYPES_RPC_HEADER__
 
 #include <rpc/wrpc_first_com_include.h>
+#ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
+#else
+#endif
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -124,10 +127,12 @@ typedef uint8_t u_char;
 typedef uint32_t __uint32_t;
 typedef uint32_t uid_t;
 typedef uint32_t gid_t;
+#ifdef _WIN32
 #ifndef pid_t_defined
 #define pid_t_defined
 //typedef DWORD pid_t;
 typedef uint32_t pid_t;
+#endif
 #endif
 typedef unsigned long u_long;
 
