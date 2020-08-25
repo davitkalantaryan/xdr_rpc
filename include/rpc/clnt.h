@@ -43,7 +43,13 @@
 #include <rpc/types.h>
 #include "rpc/auth.h"
 #include "rpc/xdr.h"
+#ifdef _WIN32
 #include <process.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#endif
 
 MINI_XDR_BEGIN_C_DECLS
 

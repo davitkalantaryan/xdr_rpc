@@ -44,6 +44,8 @@
 
 MINI_XDR_BEGIN_C_DECLS
 
+struct XDRstruct;
+
 #ifndef xdrproc_t_defined
 #define xdrproc_t_defined
 typedef	bool_t(*xdrproc_t) (struct XDRstruct *, void *, ...);
