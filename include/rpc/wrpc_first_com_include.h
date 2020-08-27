@@ -10,11 +10,13 @@
 #ifndef __wrpc_first_com_include1_h__
 #define __wrpc_first_com_include1_h__
 
-#pragma include_alias( "rpc.h", "rpc/redirected_win_rpc.h" )
 
-#if defined(_MSC_VER) & (_MSC_VER>1400)
+#if defined(_MSC_VER)
+#pragma include_alias( "rpc.h", "rpc/redirected_win_rpc.h" )
+#if (_MSC_VER>1400)
 // 'function': incompatible types - from 'pmap *' to 'caddr_t' [CLNT_CALL(client, PMAPPROC_UNSET, xdr_pmap, &parms, xdr_bool, &rslt,tottimeout); ]
 //#pragma warning(disable:4133) 
+#endif
 #endif  // #if defined(_MSC_VER) & (_MSC_VER>1400)
 
 //#include <first_includes/common_include_for_headers.h>

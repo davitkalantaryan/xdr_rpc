@@ -1,0 +1,3 @@
+[submodule "contrib/elac"]
+	path = contrib/elac
+	url = https://github.com/davitkalantaryan/elac.git
