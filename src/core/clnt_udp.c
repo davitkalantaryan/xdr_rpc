@@ -57,6 +57,11 @@ static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/doocs_rpc_unix_like_functions.h>
 #include "mini_xdr_rpc_src_private.h"
 
+#ifdef _WIN32
+#else
+#include <sys/ioctl.h>
+#endif
+
 MINI_XDR_BEGIN_C_DECLS
 
 /*
@@ -216,9 +221,9 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	return (cl);
 fooy:
 	if (cu)
-		mem_free((caddr_t)cu, sizeof(*cu) + sendsz + recvsz);
+		mem_free(cu, sizeof(*cu) + sendsz + recvsz);
 	if (cl)
-		mem_free((caddr_t)cl, sizeof(CLIENT));
+		mem_free(cl, sizeof(CLIENT));
 	return ((CLIENT *)NULL);
 }
 
@@ -251,7 +256,7 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	register XDR *xdrs;
 	register int outlen;
 	register int inlen;
-	int fromlen;
+	socklen_t fromlen;
 #ifdef FD_SETSIZE
 	fd_set readfds;
 	fd_set mask;
@@ -325,10 +330,12 @@ send_again:
 #endif /* def FD_SETSIZE */
 	for (;;) {
 		readfds = mask;
-#ifdef _WIN32
+#if defined( _WIN32 )
 		switch (select(0 /* unused in winsock */, &readfds, NULL,
+#elif defined(EMSCRIPTEN)
+		switch (select(cu->cu_sock+1, &readfds, NULL,
 #else
-		switch (select(_rpc_dtablesize(), &readfds, (int *)NULL, 
+		switch (select(_rpc_dtablesize(), &readfds, NULL,  
 #endif
 			       NULL, &(cu->cu_wait))) {
 
@@ -499,8 +506,8 @@ clntudp_destroy(cl)
 #endif
 	}
 	XDR_DESTROY(&(cu->cu_outxdrs));
-	mem_free((caddr_t)cu, (sizeof(*cu) + cu->cu_sendsz + cu->cu_recvsz));
-	mem_free((caddr_t)cl, sizeof(CLIENT));
+	mem_free(cu, (sizeof(*cu) + cu->cu_sendsz + cu->cu_recvsz));
+	mem_free(cl, sizeof(CLIENT));
 }
 
 

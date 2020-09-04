@@ -62,7 +62,9 @@ MINI_XDR_BEGIN_C_DECLS
  * NB: Not portable.
  * This routine works on Suns (Sky / 68000's) and Vaxen.
  */
-#if defined(mc68000) || defined(sparc) || defined(mips) || defined(mmax) || defined(_M_IX86) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_AMD64) || defined(_ALPHA_)
+#if defined(mc68000) || defined(sparc) || defined(mips) || defined(mmax) || defined(_M_IX86) || \
+	defined(_M_ARM) || defined(_M_ARM64) || defined(_M_AMD64) || defined(_ALPHA_)	||\
+	defined(EMSCRIPTEN)  || defined(LINUX)
 #define X86_AND_FRIENDS_DEFINED
 #elif defined(vax)
 

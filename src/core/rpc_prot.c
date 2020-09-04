@@ -121,6 +121,9 @@ xdr_accepted_reply(xdrs, ar)
 		if (! xdr_u_long(xdrs, &(ar->ar_vers.low)))
 			return (FALSE);
 		return (xdr_u_long(xdrs, &(ar->ar_vers.high)));
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
+		break;
 	}
 	return (TRUE);  /* TRUE => open ended set of problems */
 }
@@ -147,13 +150,17 @@ xdr_rejected_reply(xdrs, rr)
 
 	case AUTH_ERROR:
 		return (xdr_enum(xdrs, (enum_t *)&(rr->rj_why)));
+		
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
+		break;
 	}
 	return (FALSE);
 }
 
 static struct xdr_discrim reply_dscrm[3] = {
-	{ (int)MSG_ACCEPTED, xdr_accepted_reply },
-	{ (int)MSG_DENIED, xdr_rejected_reply },
+	{ (int)MSG_ACCEPTED, (xdrproc_t)xdr_accepted_reply },
+	{ (int)MSG_DENIED, (xdrproc_t)xdr_rejected_reply },
 	{ __dontcare__, NULL_xdrproc_t } };
 
 /*
@@ -247,13 +254,16 @@ rejected(rjct_stat, error)
 
 	switch (rjct_stat) {
 
-	case RPC_VERSMISMATCH:
+	case RPC_VERSMISMATCH_REJ_STAT:
 		error->re_status = RPC_VERSMISMATCH;
 		return;
 
 	case AUTH_ERROR:
 		error->re_status = RPC_AUTHERROR;
 		return;
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
+		break;
 	}
 	/* something's wrong, but we don't know what ... */
 	error->re_status = RPC_FAILED;
@@ -266,8 +276,8 @@ rejected(rjct_stat, error)
  */
 void
 _seterr_reply(msg, error)
-	register struct rpc_msg *msg;
-	register struct rpc_err *error;
+	struct rpc_msg *msg;
+	struct rpc_err *error;
 {
 
 	/* optimized for normal, SUCCESSful case */
@@ -304,6 +314,10 @@ _seterr_reply(msg, error)
 	case RPC_PROGVERSMISMATCH:
 		error->re_vers.low = msg->acpted_rply.ar_vers.low;
 		error->re_vers.high = msg->acpted_rply.ar_vers.high;
+		break;
+		
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
 		break;
 	}
 }

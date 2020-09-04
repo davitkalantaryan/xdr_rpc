@@ -65,10 +65,14 @@ static char sccsid[] = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 #include <stddef.h>
 #ifdef _WIN32
 #include <io.h>
+#define lseek	_lseek
 #else
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 #include "mini_xdr_rpc_src_private.h"
+#include <stdint.h>
 
 MINI_XDR_BEGIN_C_DECLS
 
@@ -315,9 +319,9 @@ xdrrec_getpos(xdrs)
 	XDR *xdrs;
 {
 	register RECSTREAM *rstrm = (RECSTREAM *)xdrs->x_private;
-	register __int64 pos;
+	register int64_t pos;
 
-	pos = _lseek((int)((ptrdiff_t)rstrm->tcp_handle), (long) 0, 1);
+	pos = lseek((int)((ptrdiff_t)rstrm->tcp_handle), (long) 0, 1);
 	if (pos != -1)
 		switch (xdrs->x_op) {
 
@@ -368,6 +372,10 @@ xdrrec_setpos(xdrs, pos)
 				return (TRUE);
 			}
 			break;
+			
+		default:
+			fprintf(stderr,"%s default:\n",__FUNCTION__);
+			break;
 		}
 	return (FALSE);
 }
@@ -397,6 +405,10 @@ xdrrec_inline(xdrs, len)
 			rstrm->in_finger += len;
 		}
 		break;
+		
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
+		break;
 	}
 	return (buf);
 }
@@ -409,7 +421,7 @@ xdrrec_destroy(xdrs)
 
 	mem_free(rstrm->the_buffer,
 		rstrm->sendsize + rstrm->recvsize + BYTES_PER_XDR_UNIT);
-	mem_free((caddr_t)rstrm, sizeof(RECSTREAM));
+	mem_free(rstrm, sizeof(RECSTREAM));
 }
 
 

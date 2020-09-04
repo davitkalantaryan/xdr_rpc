@@ -10,8 +10,12 @@ prj/*/*/*
 !prj/*/*_vs/*.vcxproj
 !prj/*/*_vs/*.vcxproj.filters
 !prj/*/*_vs/*.props
+#
 !prj/*/*_qt/*.pro
 !prj/*/*_qt/*.pri
+#
+!prj/*/*_mkfl/*Makefile*
+
 compile_result_*.txt
 
 workspaces/*/*

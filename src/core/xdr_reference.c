@@ -96,6 +96,10 @@ xdr_reference(xdrs, pp, size, proc)
 			}
 			bzero(loc, (int)size);
 			break;
+			
+		default:
+			fprintf(stderr,"%s default:\n",__FUNCTION__);
+			break;
 	}
 
 	stat = (*proc)(xdrs, loc, LASTUNSIGNED);

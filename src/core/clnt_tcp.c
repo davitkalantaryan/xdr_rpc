@@ -69,9 +69,18 @@ static char sccsid[] = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 #include <rpc/doocs_rpc_unix_like_functions.h>
 #include "mini_xdr_rpc_src_private.h"
 
+#ifdef _WIN32
+#else
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#endif
+
 #define MCALL_MSG_SIZE	24
 
 MINI_XDR_BEGIN_C_DECLS
+
+struct ct_data;
 
 static int	readtcp(register struct ct_data* ct, caddr_t buf,register int len);
 static int	writetcp(struct ct_data* ct,caddr_t buf,int len);
@@ -162,8 +171,8 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	if (raddr->sin_port == 0) {
 		u_short port;
 		if ((port = pmap_getport(raddr, prog, vers, IPPROTO_TCP)) == 0) {
-			mem_free((caddr_t)ct, sizeof(struct ct_data));
-			mem_free((caddr_t)h, sizeof(CLIENT));
+			mem_free(ct, sizeof(struct ct_data));
+			mem_free(h, sizeof(CLIENT));
 			return ((CLIENT *)NULL);
 		}
 		raddr->sin_port = htons(port);
@@ -258,8 +267,8 @@ fooy:
 	/*
 	 * Something goofed, free stuff and barf
 	 */
-	mem_free((caddr_t)ct, sizeof(struct ct_data));
-	mem_free((caddr_t)h, sizeof(CLIENT));
+	mem_free(ct, sizeof(struct ct_data));
+	mem_free(h, sizeof(CLIENT));
 	return ((CLIENT *)NULL);
 }
 
@@ -322,7 +331,7 @@ call_again:
 	while (TRUE) {
 		reply_msg.acpted_rply.ar_verf = _null_auth;
 		reply_msg.acpted_rply.ar_results.where = NULL;
-		reply_msg.acpted_rply.ar_results.proc = xdr_void;
+		reply_msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
 		if (! xdrrec_skiprecord(xdrs))
 			return (ct->ct_error.re_status);
 		/* now decode and validate the response header */
@@ -431,10 +440,11 @@ clnttcp_destroy(h)
 #endif
 	}
 	XDR_DESTROY(&(ct->ct_xdrs));
-	mem_free((caddr_t)ct, sizeof(struct ct_data));
-	mem_free((caddr_t)h, sizeof(CLIENT));
+	mem_free(ct, sizeof(struct ct_data));
+	mem_free(h, sizeof(CLIENT));
 }
 
+// static int	readtcp(register struct ct_data* ct, caddr_t buf,register int len);
 /*
  * Interface between xdr serializer and tcp connection.
  * Behaves like the system calls, read & write, but keeps some error state
@@ -465,8 +475,7 @@ readtcp(ct, buf, len)
 	while (TRUE) {
 		readfds = mask;
 #ifdef _WIN32
-		switch (select(0 /* unused in winsock */, &readfds, NULL, NULL,
-			       &(ct->ct_wait))) {
+		switch (select(0 /* unused in winsock */, &readfds, NULL, NULL,&(ct->ct_wait))) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
 			return (-1);
@@ -496,8 +505,11 @@ readtcp(ct, buf, len)
 	}
 	return (len);
 #else
-		switch (select(_rpc_dtablesize(), &readfds, (int*)NULL, (int*)NULL,
-			       &(ct->ct_wait))) {
+#ifdef EMSCRIPTEN
+		switch (select(ct->ct_sock+1, &readfds,NULL,NULL,&(ct->ct_wait))) {
+#else
+		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL,&(ct->ct_wait))) {
+#endif
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
 			return (-1);

@@ -116,6 +116,10 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 
 		case XDR_FREE:
 			return (TRUE);
+		
+		default:
+			fprintf(stderr,"%s default:\n",__FUNCTION__);
+			break;
 	}
 
 	/*

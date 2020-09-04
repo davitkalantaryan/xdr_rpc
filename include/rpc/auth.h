@@ -90,6 +90,8 @@ struct opaque_auth {
 	u_int	oa_length;		/* not to exceed MAX_AUTH_BYTES */
 };
 
+struct XDRstruct;
+
 /*
  * Auth handle, interface to client side authenticators.
  */

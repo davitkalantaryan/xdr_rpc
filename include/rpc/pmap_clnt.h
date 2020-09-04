@@ -41,6 +41,7 @@
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <rpc/clnt.h>
 
 MINI_XDR_BEGIN_C_DECLS
 

@@ -51,6 +51,11 @@ static char sccsid[] = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 #include <rpc/clnt.h>
 #include <rpc/svc.h>
 #include "mini_xdr_rpc_src_private.h"
+#ifdef _WIN32
+#else
+#include <netdb.h>
+#include <sys/socket.h>
+#endif
 
 MINI_XDR_BEGIN_C_DECLS
 
@@ -74,10 +79,14 @@ clnt_create(hostname, prog, vers, proto)
 	struct timeval tv;
 	CLIENT *client;
 
+#ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable:4996)
-	h = gethostbyname(hostname);
+#endif
+	h = gethostbyname(hostname);	
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 	if (!h) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
 		return (NULL);

@@ -301,12 +301,12 @@ xdr_u_short(xdrs, usp)
 	register XDR *xdrs;
 	u_short *usp;
 {
-	u_long l;
+	long l;
 
 	switch (xdrs->x_op) {
 
 	case XDR_ENCODE:
-		l = (u_long) *usp;
+		l = (long) *usp;
 		return (XDR_PUTLONG(xdrs, &l));
 
 	case XDR_DECODE:
@@ -350,7 +350,7 @@ MINI_XDR_EXPORT
 bool_t
 xdr_u_char(xdrs, cp)
 	XDR *xdrs;
-	char *cp;
+	u_char *cp;
 {
 	u_int u;
 
@@ -436,7 +436,7 @@ xdr_opaque(xdrs, cp, cnt)
 	register u_int cnt;
 {
 	register u_int rndup;
-	static crud[BYTES_PER_XDR_UNIT];
+	static char crud[BYTES_PER_XDR_UNIT];
 
 	/*
 	 * if no data we are done
@@ -632,6 +632,10 @@ xdr_string(xdrs, cpp, maxsize)
 		/* fall through... */
 	case XDR_ENCODE:
 		size = (u_int)strlen(sp);
+		break;
+		
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
 		break;
 	}
 	if (! xdr_u_int(xdrs, &size)) {
