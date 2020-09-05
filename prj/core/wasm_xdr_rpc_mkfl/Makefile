@@ -11,7 +11,7 @@ TARGET_DIR  		= $(mkfile_dir)/../../../sys/$(LSB_RELEASE)/lib
 SOURCES_BASE_DIR	= $(mkfile_dir)/../../../src/core
 
 
-CPP = emcc
+CC = emcc
 LINK = emar r
 #CPP = arm-linux-gnueabihf-g++
 #LINK = arm-linux-gnueabihf-g++
@@ -26,9 +26,11 @@ TARGET_FILE_PATH = $(TARGET_DIR)/$(OUTPUT_NAME)
 
 
 #CPPPARAMS = -m32 -I../../../include -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -Wno-write-strings -DIs32Bit
-CPPPARAMS = -O2 -DLINUX -D_REENTRANT -D_GNU_SOURCE -D_BSD -D__USE_GNU -D__USE_UNIX98
-CPPPARAMS += -DMULTITHREADED
-CPPPARAMS += -I$(mkfile_dir)/../../../include -fPIC
+CPARAMS = -O2 -DLINUX -D_REENTRANT -D_GNU_SOURCE -D_BSD -D__USE_GNU -D__USE_UNIX98
+CPARAMS += -DMULTITHREADED
+CPARAMS += -I$(mkfile_dir)/../../../include -fPIC
+CPARAMS += $(WASM_MULTITHREADED_FLAGS)
+
 
 # $(OBJECT_FILES_DIR)/shmalloc.o # shared memory routines for windows
 # $(OBJECT_FILES_DIR)/syslib.o   # <execinfo.h> is not known
@@ -63,7 +65,7 @@ testVars:
 
 $(OBJECT_FILES_DIR)/%.o: $(SOURCES_BASE_DIR)/%.c
 	mkdir -p $(@D)
-	$(CPP) $(CPPPARAMS) -o $@ -c $<
+	$(CC) $(CPARAMS) -o $@ -c $<
 
 
 $(TARGET_NAME): $(OBJECTS)
