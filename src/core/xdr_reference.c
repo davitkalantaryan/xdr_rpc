@@ -54,7 +54,8 @@ static char sccsid[] = "@(#)xdr_reference.c 1.11 87/08/11 SMI";
 #include <stdio.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-#include <malloc.h> 
+#include <malloc.h>
+#include <stdarg.h>
 #include "mini_xdr_rpc_src_private.h"
 
 
@@ -72,7 +73,8 @@ MINI_XDR_BEGIN_C_DECLS
  * size is the sizeof the referneced structure.
  * proc is the routine to handle the referenced structure.
  */
-MINI_XDR_EXPORT
+// MINI_XDR_EXPORT  // for time being exporting this function is not necessary
+static
 bool_t
 xdr_reference(xdrs, pp, size, proc)
 	register XDR *xdrs;
@@ -94,7 +96,7 @@ xdr_reference(xdrs, pp, size, proc)
 				(void) fprintf(stderr,"xdr_reference: out of memory\n");
 				return (FALSE);
 			}
-			bzero(loc, (int)size);
+			bzero(loc, size);
 			break;
 			
 		default:
@@ -133,14 +135,20 @@ xdr_reference(xdrs, pp, size, proc)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_pointer(xdrs,objpp,obj_size,xdr_obj)
-	register XDR *xdrs;
-	char **objpp;
+xdr_pointer(XDR_RPC_REGISTER XDR * xdrs, void* objppp, ...)
+{
+	char** objpp = (char** )objppp;
+	va_list ap;
+	
 	u_int obj_size;
 	xdrproc_t xdr_obj;
-{
 
 	bool_t more_data;
+	
+	va_start(ap, objppp);
+	obj_size = va_arg(ap,u_int);
+	xdr_obj = va_arg(ap,xdrproc_t);
+	va_end(ap);
 
 	more_data = (*objpp != NULL);
 	if (! xdr_bool(xdrs,&more_data)) {

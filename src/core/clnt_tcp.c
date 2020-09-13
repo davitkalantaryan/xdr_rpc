@@ -82,7 +82,7 @@ MINI_XDR_BEGIN_C_DECLS
 
 struct ct_data;
 
-static int	readtcp(register struct ct_data* ct, caddr_t buf,register int len);
+static int	readtcp(XDR_RPC_REGISTER struct ct_data* ct, caddr_t buf,XDR_RPC_REGISTER int len);
 static int	writetcp(struct ct_data* ct,caddr_t buf,int len);
 
 static enum clnt_stat	clnttcp_call(CLIENT *, u_long, xdrproc_t, caddr_t, xdrproc_t, caddr_t, struct timeval);
@@ -113,6 +113,39 @@ struct ct_data {
 	XDR		ct_xdrs;
 };
 
+MINI_XDR_EXPORT
+int set_socket_timeout(xdrRpcSock a_socket, const struct timeval * a_pTimeout)
+{
+	char* pInput;
+	socklen_t nInputLen;
+	
+#ifdef _WIN32
+	DWORD dwTimeout;
+	if(a_pTimeout) {
+		dwTimeout = a_pTimeout->tv_sec * 1000 + a_pTimeout->tv_usec / 1000 ;
+	}
+	else {
+		dwTimeout = INFINITE;
+	}
+	pInput = (char*)&dwTimeout;
+	nInputLen = sizeof(DWORD);	
+#else
+	struct timeval tv;
+	if(a_pTimeout) {tv=*a_pTimeout;}
+	else {
+		tv.tv_sec = 21474836;
+		tv.tv_usec = 1000;
+	}
+	pInput = (char*)&tv;
+	nInputLen = sizeof(struct timeval);
+#endif
+
+	if (setsockopt(a_socket,SOL_SOCKET,SO_RCVTIMEO,pInput,nInputLen) < 0){return -1;}
+	
+	return 0;	
+}
+
+
 /*
  * Create a client handle for a tcp/ip connection.
  * If *sockp<0, *sockp is set to a newly created TCP socket and it is
@@ -133,14 +166,16 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	struct sockaddr_in *raddr;
 	u_long prog;
 	u_long vers;
-	register int *sockp;
+	XDR_RPC_REGISTER int *sockp;
 	u_int sendsz;
 	u_int recvsz;
 {
 	CLIENT *h;
-	register struct ct_data *ct = NULL;
+	XDR_RPC_REGISTER struct ct_data *ct = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
+    
+    XDR_RPC_DEBUG("file:%s,line:%d,*sockp=%d\n",__FILE__,__LINE__,(int)(*sockp));
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
 	if (!h) {
@@ -164,51 +199,35 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 #endif
 		goto fooy;
 	}
+    
+    XDR_RPC_DEBUG("file:%s,line:%d,*sockp=%d,raddr->sin_port=%d\n",__FILE__,__LINE__,(int)(*sockp),(int)raddr->sin_port);
 
 	/*
 	 * If no port number given ask the pmap for one
 	 */
 	if (raddr->sin_port == 0) {
 		u_short port;
-		if ((port = pmap_getport(raddr, prog, vers, IPPROTO_TCP)) == 0) {
+		// todo: in the case of windows maybe change below will not work
+		if((port = pmap_getport(raddr, prog, vers, IPPROTO_TCP)) == 0) {
 			mem_free(ct, sizeof(struct ct_data));
 			mem_free(h, sizeof(CLIENT));
 			return ((CLIENT *)NULL);
 		}
 		raddr->sin_port = htons(port);
 	}
+    
+    XDR_RPC_DEBUG("file:%s,line:%d,*sockp=%d,raddr->sin_port=%d\n",__FILE__,__LINE__,(int)(*sockp),(int)raddr->sin_port);
 
 	/*
 	 * If no socket given, open one
 	 */
-#ifdef _WIN32
-	if (*sockp == INVALID_SOCKET) {
-		struct linger slinger;
-		
-		*sockp = (int)socket(AF_INET, SOCK_STREAM, 0);
-		bindresvport(*sockp, (struct sockaddr_in *)0);
-
-		slinger.l_onoff = 1;
-		slinger.l_linger = 0;
-		setsockopt(*sockp, SOL_SOCKET, SO_LINGER, (char*)&slinger, sizeof(struct linger));
-
-		if ((*sockp == INVALID_SOCKET)
-		    || (connect(*sockp, (struct sockaddr *)raddr,
-		    sizeof(*raddr)) < 0)) {
-			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-			rpc_createerr.cf_error.re_errno = WSAGetLastError();
-			(void)closesocket(*sockp);
-#else
 	if (*sockp < 0) {
 		*sockp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
-		if ((*sockp < 0)
-		    || (connect(*sockp, (struct sockaddr *)raddr,
-		    sizeof(*raddr)) < 0)) {
+		if ((*sockp < 0)|| (connect(*sockp, (struct sockaddr *)raddr,sizeof(*raddr)) < 0)) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-			rpc_createerr.cf_error.re_errno = errno;
-			(void)close(*sockp);
-#endif
+			rpc_createerr.cf_error.re_errno = WSAGetLastError();
+			(void)closesocket(*sockp);	
 			goto fooy;
 		}
 		ct->ct_closeit = TRUE;
@@ -228,6 +247,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * Initialize call message
 	 */
 	(void)gettimeofday(&now, (struct timezone *)0);
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
 	call_msg.rm_xid = getpid() ^ now.tv_sec ^ now.tv_usec;
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -237,18 +257,17 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	/*
 	 * pre-serialize the staic part of the call msg and stash it away
 	 */
-	xdrmem_create(&(ct->ct_xdrs), ct->ct_mcall, MCALL_MSG_SIZE,
-	    XDR_ENCODE);
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	xdrmem_create(&(ct->ct_xdrs), ct->ct_mcall, MCALL_MSG_SIZE,XDR_ENCODE);
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
 	if (! xdr_callhdr(&(ct->ct_xdrs), &call_msg)) {
+		XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
 		if (ct->ct_closeit) {
-#ifdef _WIN32
 			(void)closesocket(*sockp);
-#else
-			(void)close(*sockp);
-#endif
 		}
 		goto fooy;
 	}
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
 	ct->ct_mpos = XDR_GETPOS(&(ct->ct_xdrs));
 	XDR_DESTROY(&(ct->ct_xdrs));
 
@@ -256,11 +275,13 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * Create a client handle which uses xdrrec for serialization
 	 * and authnone for authentication.
 	 */
-	xdrrec_create(&(ct->ct_xdrs), sendsz, recvsz,
-	    (caddr_t)ct, readtcp, writetcp);
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	xdrrec_create(&(ct->ct_xdrs), sendsz, recvsz,(caddr_t)ct, readtcp, writetcp);
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
 	h->cl_ops = &tcp_ops;
 	h->cl_private = (caddr_t) ct;
 	h->cl_auth = authnone_create();
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
 	return (h);
 
 fooy:
@@ -272,10 +293,24 @@ fooy:
 	return ((CLIENT *)NULL);
 }
 
+//#include <trace.h>
+//#define __cplusplus
+#ifdef _WIN32
+#define pthread_self_emscr GetCurrentThreadId
+#else
+#include <pthread.h>
+#ifdef EMSCRIPTEN
+pthread_t pthread_self_emscr(void);
+#else
+#define pthread_self_emscr	pthread_self
+#endif
+#endif
+
 //CLIENT *, u_long, xdrproc_t, caddr_t, xdrproc_t, caddr_t, struct timeval
+// enum clnt_stat	(*cl_call)(struct CLIENTstruct *, u_long, xdrproc_t, caddr_t, xdrproc_t, caddr_t, struct timeval);	/* call remote procedure */
 static enum clnt_stat
 clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
-	CLIENT *h;
+	struct CLIENTstruct *h;
 	u_long proc;
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
@@ -283,17 +318,24 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	caddr_t results_ptr;
 	struct timeval timeout;
 {
-	register struct ct_data *ct = (struct ct_data *) h->cl_private;
-	register XDR *xdrs = &(ct->ct_xdrs);
+	XDR_RPC_REGISTER struct ct_data *ct = (struct ct_data *) h->cl_private;
+	XDR_RPC_REGISTER XDR *xdrs = &(ct->ct_xdrs);
 	struct rpc_msg reply_msg;
 	u_long x_id;
 	u_long *msg_x_id = (u_long *)(ct->ct_mcall);	/* yuk */
-	register bool_t shipnow;
+	XDR_RPC_REGISTER bool_t shipnow;
 	int refreshes = 2;
+		
+	XDR_RPC_DEBUG("file:%s,line:%d,proc=%d\n",__FILE__,__LINE__,(int)proc);
 
 	if (!ct->ct_waitset) {
 		ct->ct_wait = timeout;
+		if(ct->ct_sock>=0) {
+			set_socket_timeout(ct->ct_sock,&timeout);
+		}
 	}
+	
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	shipnow =
 	    (xdr_results == (xdrproc_t)0 && timeout.tv_sec == 0
@@ -303,17 +345,27 @@ call_again:
 	xdrs->x_op = XDR_ENCODE;
 	ct->ct_error.re_status = RPC_SUCCESS;
 	x_id = ntohl(--(*msg_x_id));
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	
+		
 	if ((! XDR_PUTBYTES(xdrs, ct->ct_mcall, ct->ct_mpos)) ||
 	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xdr_args)(xdrs, args_ptr))) {
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		if (ct->ct_error.re_status == RPC_SUCCESS)
 			ct->ct_error.re_status = RPC_CANTENCODEARGS;
+		XDR_RPC_DEBUG("file:%s,line:%d,xdr_args=%p, gettid()=%d\n",__FILE__,__LINE__,(void*)xdr_args,(int)pthread_self_emscr());
 		(void)xdrrec_endofrecord(xdrs, TRUE);
+		XDR_RPC_DEBUG("file:%s,line:%d,xdr_args=%p, gettid()=%d\n",__FILE__,__LINE__,(void*)xdr_args,(int)pthread_self_emscr());
 		return (ct->ct_error.re_status);
 	}
-	if (! xdrrec_endofrecord(xdrs, shipnow))
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	if (! xdrrec_endofrecord(xdrs, shipnow)){
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		return (ct->ct_error.re_status = RPC_CANTSEND);
+	}
+	XDR_RPC_DEBUG("file:%s,line:%d,shipnow=%d\n",__FILE__,__LINE__,shipnow);
 	if (! shipnow)
 		return (RPC_SUCCESS);
 	/*
@@ -331,24 +383,33 @@ call_again:
 	while (TRUE) {
 		reply_msg.acpted_rply.ar_verf = _null_auth;
 		reply_msg.acpted_rply.ar_results.where = NULL;
-		reply_msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
-		if (! xdrrec_skiprecord(xdrs))
+		reply_msg.acpted_rply.ar_results.proc = &xdr_void;
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		if (! xdrrec_skiprecord(xdrs)){
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 			return (ct->ct_error.re_status);
+		}
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		/* now decode and validate the response header */
 		if (! xdr_replymsg(xdrs, &reply_msg)) {
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 			if (ct->ct_error.re_status == RPC_SUCCESS)
 				continue;
 			return (ct->ct_error.re_status);
 		}
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		if (reply_msg.rm_xid == x_id)
 			break;
 	}
 
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	/*
 	 * process header
 	 */
 	_seterr_reply(&reply_msg, &(ct->ct_error));
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	if (ct->ct_error.re_status == RPC_SUCCESS) {
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		if (! AUTH_VALIDATE(h->cl_auth, &reply_msg.acpted_rply.ar_verf)) {
 			ct->ct_error.re_status = RPC_AUTHERROR;
 			ct->ct_error.re_why = AUTH_INVALIDRESP;
@@ -359,27 +420,33 @@ call_again:
 		/* free verifier ... */
 		if (reply_msg.acpted_rply.ar_verf.oa_base != NULL) {
 			xdrs->x_op = XDR_FREE;
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 			(void)xdr_opaque_auth(xdrs, &(reply_msg.acpted_rply.ar_verf));
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		}
 	}  /* end successful completion */
 	else {
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		/* maybe our credentials need to be refreshed ... */
 		if (refreshes-- && AUTH_REFRESH(h->cl_auth))
 			goto call_again;
 	}  /* end of unsuccessful completion */
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	return (ct->ct_error.re_status);
 }
+
 
 static void
 clnttcp_geterr(h, errp)
 	CLIENT *h;
 	struct rpc_err *errp;
 {
-	register struct ct_data *ct =
+	XDR_RPC_REGISTER struct ct_data *ct =
 	    (struct ct_data *) h->cl_private;
 
 	*errp = ct->ct_error;
 }
+
 
 static bool_t
 clnttcp_freeres(cl, xdr_res, res_ptr)
@@ -387,17 +454,19 @@ clnttcp_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	register struct ct_data *ct = (struct ct_data *)cl->cl_private;
-	register XDR *xdrs = &(ct->ct_xdrs);
+	XDR_RPC_REGISTER struct ct_data *ct = (struct ct_data *)cl->cl_private;
+	XDR_RPC_REGISTER XDR *xdrs = &(ct->ct_xdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
+
 static void
 clnttcp_abort(CLIENT * c)
 {
 }
+
 
 static bool_t
 clnttcp_control(cl, request, info)
@@ -405,11 +474,14 @@ clnttcp_control(cl, request, info)
 	u_int request;
 	char *info;
 {
-	register struct ct_data *ct = (struct ct_data *)cl->cl_private;
+	XDR_RPC_REGISTER struct ct_data *ct = (struct ct_data *)cl->cl_private;
 
 	switch (request) {
 	case CLSET_TIMEOUT:
 		ct->ct_wait = *(struct timeval *)info;
+		if(ct->ct_sock>=0) {
+			set_socket_timeout(ct->ct_sock,&ct->ct_wait);
+		}
 		ct->ct_waitset = TRUE;
 		break;
 	case CLGET_TIMEOUT:
@@ -429,7 +501,7 @@ static void
 clnttcp_destroy(h)
 	CLIENT *h;
 {
-	register struct ct_data *ct =
+	XDR_RPC_REGISTER struct ct_data *ct =
 	    (struct ct_data *) h->cl_private;
 
 	if (ct->ct_closeit) {
@@ -444,7 +516,7 @@ clnttcp_destroy(h)
 	mem_free(h, sizeof(CLIENT));
 }
 
-// static int	readtcp(register struct ct_data* ct, caddr_t buf,register int len);
+// static int	readtcp(XDR_RPC_REGISTER struct ct_data* ct, caddr_t buf,XDR_RPC_REGISTER int len);
 /*
  * Interface between xdr serializer and tcp connection.
  * Behaves like the system calls, read & write, but keeps some error state
@@ -452,94 +524,22 @@ clnttcp_destroy(h)
  */
 static int
 readtcp(ct, buf, len)
-	register struct ct_data *ct;
+	XDR_RPC_REGISTER struct ct_data *ct;
 	caddr_t buf;
-	register int len;
+	XDR_RPC_REGISTER int len;
 {
-#ifdef FD_SETSIZE
-	fd_set mask;
-	fd_set readfds;
-
-	if (len == 0)
-		return (0);
-	FD_ZERO(&mask);
-	FD_SET(ct->ct_sock, &mask);
-#else
-	register int mask = 1 << (ct->ct_sock);
-	int readfds;
-
-	if (len == 0)
-		return (0);
-
-#endif /* def FD_SETSIZE */
-	while (TRUE) {
-		readfds = mask;
-#ifdef _WIN32
-		switch (select(0 /* unused in winsock */, &readfds, NULL, NULL,&(ct->ct_wait))) {
-		case 0:
-			ct->ct_error.re_status = RPC_TIMEDOUT;
-			return (-1);
-
-		case -1:
-			if (WSAGetLastError() == EINTR)
-				continue;
-			ct->ct_error.re_status = RPC_CANTRECV;
-			ct->ct_error.re_errno = WSAGetLastError();
-			return (-1);
-		}
-		break;
-	}
-	switch (len = recv(ct->ct_sock, buf, len, 0)) {
-
-	case 0:
-		/* premature eof */
-		ct->ct_error.re_errno = WSAECONNRESET;
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,sock=%d,len=%d\n",__FILE__,__LINE__,__FUNCTION__,ct->ct_sock,len);
+	len = (int)recv(ct->ct_sock, buf, (sndrcv_size_t)len, 0);
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,sock=%d,len=%d\n",__FILE__,__LINE__,__FUNCTION__,ct->ct_sock,len);
+	
+	if(len==SOCKET_ERROR) {
 		ct->ct_error.re_status = RPC_CANTRECV;
-		len = -1;  /* it's really an error */
-		break;
-
-	case -1:
 		ct->ct_error.re_errno = WSAGetLastError();
-		ct->ct_error.re_status = RPC_CANTRECV;
-		break;
 	}
-	return (len);
-#else
-#ifdef EMSCRIPTEN
-		switch (select(ct->ct_sock+1, &readfds,NULL,NULL,&(ct->ct_wait))) {
-#else
-		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL,&(ct->ct_wait))) {
-#endif
-		case 0:
-			ct->ct_error.re_status = RPC_TIMEDOUT;
-			return (-1);
-
-		case -1:
-			if (errno == EINTR)
-				continue;
-			ct->ct_error.re_status = RPC_CANTRECV;
-			ct->ct_error.re_errno = errno;
-			return (-1);
-		}
-		break;
-	}
-	switch (len = read(ct->ct_sock, buf, len)) {
-
-	case 0:
-		/* premature eof */
-		ct->ct_error.re_errno = ECONNRESET;
-		ct->ct_error.re_status = RPC_CANTRECV;
-		len = -1;  /* it's really an error */
-		break;
-
-	case -1:
-		ct->ct_error.re_errno = errno;
-		ct->ct_error.re_status = RPC_CANTRECV;
-		break;
-	}
-	return (len);
-#endif
+	
+	return len;	
 }
+
 
 static int
 writetcp(ct, buf, len)
@@ -547,20 +547,18 @@ writetcp(ct, buf, len)
 	caddr_t buf;
 	int len;
 {
-	register int i, cnt;
+	XDR_RPC_REGISTER int i, cnt;
+
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s\n",__FILE__,__LINE__,__FUNCTION__);
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
-#ifdef _WIN32
-		if ((i = send(ct->ct_sock, buf, cnt, 0)) == -1) {
+		if ((i = send(ct->ct_sock, buf, cnt, 0)) == SOCKET_ERROR) {
 			ct->ct_error.re_errno = WSAGetLastError();
-#else
-		if ((i = write(ct->ct_sock, buf, cnt)) == -1) {
-			ct->ct_error.re_errno = errno;
-#endif
 			ct->ct_error.re_status = RPC_CANTSEND;
 			return (-1);
 		}
 	}
+	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,sock=%d,len=%d\n",__FILE__,__LINE__,__FUNCTION__,ct->ct_sock,len);
 	return (len);
 }
 

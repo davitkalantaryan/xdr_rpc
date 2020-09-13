@@ -72,21 +72,43 @@ clnt_create(hostname, prog, vers, proto)
 	unsigned vers;
 	char *proto;
 {
-	struct hostent *h;
-	struct protoent *p;
+	//struct hostent *h;
+	//struct protoent *p;
 	struct sockaddr_in sin;
 	int sock;
 	struct timeval tv;
 	CLIENT *client;
+	struct addrinfo hints, *res=NULL;
+	int nRet;
+	int    p_proto = IPPROTO_TCP;
 
 #ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable:4996)
 #endif
-	h = gethostbyname(hostname);	
+	
+	//return NULL;
+	
+	//h = gethostbyname(hostname);
+	
+	memset(&hints, 0, sizeof (hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags |= AI_CANONNAME;
+	nRet=getaddrinfo(hostname, NULL, &hints, &res);
+	
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
+    
+    XDR_RPC_DEBUG("file:%s,line:%d, proto=%s\n",__FILE__,__LINE__,proto?proto:"null");
+	
+	if(nRet || (res->ai_family!=AF_INET)) {  // todo: for the future make loop to find internet interface
+		rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
+		return (NULL);
+	}
+    
+#if 0
 	if (!h) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
 		return (NULL);
@@ -103,10 +125,19 @@ clnt_create(hostname, prog, vers, proto)
 #endif
 		return (NULL);
 	}
-	sin.sin_family = h->h_addrtype;
+#endif
+	
+	sin = *((struct sockaddr_in *)res->ai_addr);
+	freeaddrinfo(res);
+	
+	sin.sin_family = AF_INET;
 	sin.sin_port = 0;
-	bzero(sin.sin_zero, sizeof(sin.sin_zero));
-	bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);
+	
+	//bzero(sin.sin_zero, sizeof(sin.sin_zero));
+	//bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);
+	//sin.sin_addr = res->ai_addr->sa_data;
+	
+#if 0
 	p = getprotobyname(proto);
 	if (p == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
@@ -117,8 +148,10 @@ clnt_create(hostname, prog, vers, proto)
 #endif 
 		return (NULL);
 	}
+    XDR_RPC_DEBUG("file:%s,line:%d, p->p_proto=%d\n",__FILE__,__LINE__,(int)p->p_proto);
+#endif
 	sock = RPC_ANYSOCK;
-	switch (p->p_proto) {
+	switch (p_proto) {
 	case IPPROTO_UDP:
 		tv.tv_sec = 5;
 		tv.tv_usec = 0;
@@ -131,6 +164,7 @@ clnt_create(hostname, prog, vers, proto)
 		break;
 	case IPPROTO_TCP:
 		client = clnttcp_create(&sin, prog, vers, &sock, 0, 0);
+		XDR_RPC_DEBUG("file:%s,line:%d, proto=%s, client=%p\n",__FILE__,__LINE__,proto?proto:"null",(void*)client);
 		if (client == NULL) {
 			return (NULL);
 		}

@@ -53,6 +53,10 @@
 
 MINI_XDR_BEGIN_C_DECLS
 
+typedef int xdrRpcSock; // todo: define this properly for Windows
+MINI_XDR_EXPORT
+int set_socket_timeout(xdrRpcSock a_socket, const struct timeval * a_pTimeout);
+
 /*
 * Rpc calls return an enum clnt_stat.  This should be looked at more,
 * since each implementation is required to live with this (implementation
@@ -143,7 +147,7 @@ struct rpc_err {
  */
 #ifndef xdrproc_t_defined
 #define xdrproc_t_defined
-typedef	bool_t(*xdrproc_t) (struct XDRstruct *, void *, ...);
+typedef	bool_t(*xdrproc_t) (XDR *, void *, ...);
 #endif
 typedef struct CLIENTstruct {
 	AUTH	*cl_auth;			/* authenticator */

@@ -60,6 +60,8 @@ static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 #ifdef _WIN32
 #else
 #include <sys/ioctl.h>
+#include <unistd.h>
+#include <fcntl.h>
 #endif
 
 MINI_XDR_BEGIN_C_DECLS
@@ -133,6 +135,10 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	register struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
+#ifdef _WIN32
+#else
+    int status;
+#endif
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (!cl) {
@@ -164,11 +170,12 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	if (raddr->sin_port == 0) {
 		u_short port;
 		if ((port =
-		    pmap_getport(raddr, program, version, IPPROTO_UDP)) == 0) {
+		    pmap_getport_udp(raddr, program, version, IPPROTO_UDP)) == 0) {
 			goto fooy;
 		}
 		raddr->sin_port = htons(port);
 	}
+	XDR_RPC_DEBUG("file:%s,line:%d,client->cl_ops->cl_call:%p\n",__FILE__,__LINE__,(void*)&clntudp_call);
 	cl->cl_ops = &udp_ops;
 	cl->cl_private = (caddr_t)cu;
 	cu->cu_raddr = *raddr;
@@ -205,12 +212,26 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 			goto fooy;
 		}
 		/* attempt to bind to prov port */
+        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
+        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		/* the sockets rpc controls are non-blocking */
 #ifdef _WIN32
 		(void)ioctlsocket(*sockp, FIONBIO, (u_long *) &dontblock);
 #else
-		(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
+        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		
+        
+        //(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
+        if ((status = fcntl(*sockp, F_GETFL, 0)) != -1){
+           XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+           status |= O_NONBLOCK;
+           fcntl(*sockp, F_SETFL, status);
+        }
+        
+        
+        
+        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 #endif
 		cu->cu_closeit = TRUE;
 	} else {
@@ -240,6 +261,7 @@ clntudp_create(raddr, program, version, wait, sockp)
 
 	return(clntudp_bufcreate(raddr, program, version, wait, sockp,UDPMSGSIZE, UDPMSGSIZE));
 }
+	
 
 // void *, u_long, xdrproc_t, caddr_t, xdrproc_t, caddr_t, struct timeval
 static enum clnt_stat
@@ -271,6 +293,8 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	bool_t ok;
 	int nrefreshes = 2;	/* number of times to refresh cred */
 	struct timeval timeout;
+	
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	if (cu->cu_total.tv_usec == -1) {
 		timeout = utimeout;     /* use supplied timeout */
@@ -284,19 +308,24 @@ call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, cu->cu_xdrpos);
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	/*
 	 * the transaction is the first thing in the out buffer
 	 */
 	(*(u_short *)(cu->cu_outbuf))++;
-
+	
 	if ((! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
-	    (! (*xargs)(xdrs, argsp)))
+		(! (*xargs)(xdrs, argsp))){
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);		
 		return (cu->cu_error.re_status = RPC_CANTENCODEARGS);
+	}
 
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);	
 	outlen = (int)XDR_GETPOS(xdrs);
 
 send_again:
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
 	    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen)
 	    != outlen) {

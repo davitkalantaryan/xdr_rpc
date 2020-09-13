@@ -120,7 +120,7 @@ typedef struct rec_strm {
 	/*
 	 * out-goung bits
 	 */
-	int (*writeit)();
+	XdrRpcIo writeit;
 	caddr_t out_base;	/* output buffer (points to frag header) */
 	caddr_t out_finger;	/* next output position */
 	caddr_t out_boundry;	/* data cannot up to this address */
@@ -129,7 +129,7 @@ typedef struct rec_strm {
 	/*
 	 * in-coming bits
 	 */
-	int (*readit)();
+	XdrRpcIo readit;
 	u_long in_size;	/* fixed size of the input buffer */
 	caddr_t in_base;
 	caddr_t in_finger;	/* location of next byte to be had */
@@ -162,8 +162,8 @@ xdrrec_create(xdrs, sendsize, recvsize, tcp_handle, readit, writeit)
 	register u_int sendsize;
 	register u_int recvsize;
 	caddr_t tcp_handle;
-	int (*readit)();  /* like read, but pass it a tcp_handle, not sock */
-	int (*writeit)();  /* like write, but pass it a tcp_handle, not sock */
+	XdrRpcIo readit;  /* like read, but pass it a tcp_handle, not sock */
+	XdrRpcIo writeit;  /* like write, but pass it a tcp_handle, not sock */
 {
 	register RECSTREAM *rstrm = (RECSTREAM *)mem_alloc(sizeof(RECSTREAM));
 
@@ -487,15 +487,22 @@ xdrrec_endofrecord(xdrs, sendnow)
 {
 	register RECSTREAM *rstrm = (RECSTREAM *)(xdrs->x_private);
 	register u_long len;  /* fragment length */
+	
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	if (sendnow || rstrm->frag_sent || (rstrm->out_finger + sizeof(u_long) >= rstrm->out_boundry)) {
+		bool_t bRet;
 		rstrm->frag_sent = FALSE;
-		return (flush_out(rstrm, TRUE));
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		bRet =  (flush_out(rstrm, TRUE));
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		return bRet;
 	}
 	len = POINTERS_DIFF(u_long, rstrm->out_finger,rstrm->frag_header) - sizeof(u_long);
 	*(rstrm->frag_header) = htonl((unsigned long)len | LAST_FRAG);
 	rstrm->frag_header = (u_long *)rstrm->out_finger;
 	rstrm->out_finger += sizeof(u_long);
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	return (TRUE);
 }
 
@@ -511,11 +518,13 @@ flush_out(rstrm, eor)
 	register u_long eormask = (eor == TRUE) ? LAST_FRAG : 0;
 	//register u_long len = (u_long)(rstrm->out_finger) - (u_long)(rstrm->frag_header) - sizeof(u_long);
 	register u_long len = POINTERS_DIFF(u_long,rstrm->out_finger,rstrm->frag_header) - sizeof(u_long);
+	
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	*(rstrm->frag_header) = htonl(len | eormask);
 	//len = (u_long)(rstrm->out_finger) - (u_long)(rstrm->out_base);
 	len = POINTERS_DIFF(u_long,rstrm->out_finger,rstrm->out_base);
-	if ((*(rstrm->writeit))(rstrm->tcp_handle, rstrm->out_base, (int)len)!= (int)len)
+	if ((*(rstrm->writeit))((struct ct_data *)rstrm->tcp_handle, rstrm->out_base, (int)len)!= (int)len)
 		return (FALSE);
 	rstrm->frag_header = (u_long *)rstrm->out_base;
 	rstrm->out_finger = (caddr_t)rstrm->out_base + sizeof(u_long);
@@ -534,7 +543,7 @@ fill_input_buf(rstrm)
 	i = (size_t)rstrm->in_boundry % BYTES_PER_XDR_UNIT;
 	where += i;
 	len = rstrm->in_size - i;
-	if ((len = (*(rstrm->readit))(rstrm->tcp_handle, where, len)) == -1)
+	if ((len = (*(rstrm->readit))((struct ct_data *)rstrm->tcp_handle, where, len)) == -1)
 		return (FALSE);
 	rstrm->in_finger = where;
 	where += len;

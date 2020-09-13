@@ -56,6 +56,7 @@ static char sccsid[] = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/xdr.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <stdarg.h>
 #include "mini_xdr_rpc_src_private.h"
 
 MINI_XDR_BEGIN_C_DECLS
@@ -86,12 +87,18 @@ static struct	xdr_ops xdrmem_ops = {
  */
 MINI_XDR_EXPORT
 void
-xdrmem_create(xdrs, addr, size, op)
-	register XDR *xdrs;
-	caddr_t addr;
+xdrmem_create(XDR_RPC_REGISTER XDR * xdrs, void* addrp, ...)
+{
+	caddr_t addr = (caddr_t )addrp;
+	va_list ap;
+	
 	u_int size;
 	enum xdr_op op;
-{
+	
+	va_start(ap, addrp);
+	size = va_arg(ap,u_int);
+	op = va_arg(ap,enum xdr_op);
+	va_end(ap);
 
 	xdrs->x_op = op;
 	xdrs->x_ops = &xdrmem_ops;
@@ -103,6 +110,7 @@ static void
 xdrmem_destroy(register XDR * xdrs)
 	/*XDR *xdrs;*/
 {
+	XDR_RPC_UNUSED(xdrs);
 }
 
 static bool_t

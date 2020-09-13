@@ -93,7 +93,9 @@ struct pmap {
 	long unsigned pm_port;
 };
 
-MINI_XDR_EXPORT bool_t xdr_pmap __P((XDR *__xdrs, struct pmap *__regs));
+//MINI_XDR_EXPORT bool_t xdr_pmap __P((XDR *__xdrs, struct pmap *__regs));
+// emscripten is not happy with upper defination
+MINI_XDR_EXPORT bool_t xdr_pmap __P((XDR *__xdrs, void *__regs,...));
 
 struct pmaplist {
 	struct pmap	pml_map;

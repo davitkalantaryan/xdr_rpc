@@ -43,7 +43,7 @@
 
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/types.h>
-//#include <rpc/xdr.h>
+#include <rpc/xdr.h>
 
 MINI_XDR_BEGIN_C_DECLS
 
@@ -78,8 +78,7 @@ union des_block {
 	char c[8];
 };
 typedef union des_block des_block;
-// todo: will be deleted
-//MINI_XDR_EXPORT bool_t xdr_des_block();
+
 
 /*
  * Authentication info.  Opaque to client.
@@ -90,7 +89,6 @@ struct opaque_auth {
 	u_int	oa_length;		/* not to exceed MAX_AUTH_BYTES */
 };
 
-struct XDRstruct;
 
 /*
  * Auth handle, interface to client side authenticators.
@@ -101,7 +99,7 @@ struct AUTH_struct{
 	union	des_block	ah_key;
 	struct auth_ops {
 		void(*ah_nextverf)(struct AUTH_struct*);
-		int(*ah_marshal)(struct AUTH_struct*, struct XDRstruct*);	/* nextverf & serialize */
+		int(*ah_marshal)(struct AUTH_struct*, XDR*);	/* nextverf & serialize */
 		int(*ah_validate)(struct AUTH_struct*, struct opaque_auth*);	/* validate verifier */
 		int(*ah_refresh)(struct AUTH_struct *);	/* refresh credentials */
 		void(*ah_destroy)(struct AUTH_struct*);	/* destroy this structure */
@@ -142,8 +140,7 @@ typedef struct AUTH_struct AUTH;
 
 #define AUTH_DESTROY(auth)		\
 		((*((auth)->ah_ops->ah_destroy))(auth))
-//#define auth_destroy(auth)		\
-//		((*((auth)->ah_ops->ah_destroy))())
+//#define auth_destroy(auth)		((*((auth)->ah_ops->ah_destroy))())
 #define auth_destroy AUTH_DESTROY
 
 
@@ -175,10 +172,17 @@ MINI_XDR_EXPORT AUTH *authdes_create(void);
 #define	AUTH_SHORT	2		/* short hand unix style */
 #define AUTH_DES	3		/* des style (encrypted timestamps) */
 
+#ifndef XDR_RPC_REGISTER
+#define XDR_RPC_REGISTER
+#endif
+
+// todo: will be deleted
+//MINI_XDR_EXPORT bool_t xdr_des_block(XDR_RPC_REGISTER XDR * xdrs, void* blkpp, ...);
+
 /*
  * XDR an opaque authentication struct.
  */
-MINI_XDR_EXPORT bool_t xdr_opaque_auth(struct XDRstruct * , struct opaque_auth *) __THROW;
+MINI_XDR_EXPORT bool_t xdr_opaque_auth(XDR_RPC_REGISTER XDR * xdrs, void* app, ...) __THROW;
 MINI_XDR_EXPORT_FNL AUTH *authunix_create_default(void);
 MINI_XDR_EXPORT AUTH *authnone_create(void) __THROW;
 MINI_XDR_EXPORT AUTH * authunix_create(char* machname, uid_t uid, gid_t gid, int len, gid_t * aup_gids);

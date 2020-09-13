@@ -173,7 +173,7 @@ clnt_sperror(rpch, s)
 	char *s;
 {
 	struct rpc_err e;
-	void clnt_perrno();
+	//void clnt_perrno();
 	const char *err;
 	char *str = _buf2();
 	char *strstart = str;

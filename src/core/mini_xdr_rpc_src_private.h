@@ -7,6 +7,14 @@
 #ifndef MINI_XDR_RPC_MINI_XDR_RPC_SRC_PRIVATE_H
 #define MINI_XDR_RPC_MINI_XDR_RPC_SRC_PRIVATE_H
 
+#ifndef XDR_RPC_REGISTER
+#ifdef __cplusplus
+#define XDR_RPC_REGISTER
+#else
+#define XDR_RPC_REGISTER	 register
+#endif
+#endif
+
 #include <rpc/wrpc_first_com_include.h>
 //#include <WinSock2.h>
 //#include <WS2tcpip.h>
@@ -16,11 +24,26 @@
 #include <string.h>
 #ifdef _WIN32
 #include <process.h>
+typedef int sndrcv_size_t;
+typedef int sndrcv_ret_t;
 #else
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#if defined(EMSCRIPTEN) || defined(__EMSCRIPTEN__)
+//#define closesocket(_sock)	do{shutdown(  (_sock),SHUT_RDWR  );close((_sock));}while(0)
+#define closesocket(_sock)	shutdown(  (_sock),SHUT_RDWR  );close((_sock))
+#else
 #define closesocket	close
 #endif
+typedef size_t sndrcv_size_t;
+typedef ssize_t sndrcv_ret_t;
+#endif
+
+
+#define XDR_RPC_UNUSED(_var) (void)(_var)
+
+#define XDR_RPC_DEBUG(...)
 
 MINI_XDR_BEGIN_C_DECLS
 
@@ -58,6 +81,12 @@ MINI_XDR_BEGIN_C_DECLS
 
 extern MINI_XDR_DLL_PRIVATE struct rpc_createerr		rpc_createerr;
 extern MINI_XDR_DLL_PRIVATE struct opaque_auth			_null_auth;
+
+#ifdef _WIN32
+#else
+#define WSAGetLastError()		errno
+#define SOCKET_ERROR			-1
+#endif
 
 MINI_XDR_END_C_DECLS
 

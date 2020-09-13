@@ -10,6 +10,8 @@ INCLUDEPATH	+= $${PWD}/../../../include
 
 
 SOURCES		+=	\
+	$${PWD}/../../../src/core/emscripten_threading.cpp				\
+	\
 	$${PWD}/../../../src/core/auth_non.c							\
 	$${PWD}/../../../src/core/auth_uni.c							\
 	$${PWD}/../../../src/core/clnt_gen.c							\

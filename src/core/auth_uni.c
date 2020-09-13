@@ -216,17 +216,16 @@ authunix_create_default(void)
 
 MINI_XDR_EXPORT
 bool_t
-xdr_authunix_parms(xdrs, p)
-register XDR* xdrs;
-register struct authunix_parms* p;
+xdr_authunix_parms(XDR_RPC_REGISTER XDR * xdrs, void* pp, ...)
 {
+	register struct authunix_parms* p = (struct authunix_parms*)pp;
 
 	if (xdr_u_long(xdrs, &(p->aup_time))
 		&& xdr_string(xdrs, &(p->aup_machname), MAX_MACHINE_NAME)
 		&& xdr_u_int(xdrs, &(p->aup_uid))
 		&& xdr_u_int(xdrs, &(p->aup_gid))
 		&& xdr_array(xdrs, (caddr_t*) & (p->aup_gids),
-			&(p->aup_len), NGRPS, sizeof(int), (xdrproc_t)xdr_int)) {
+			&(p->aup_len), NGRPS, sizeof(int), &xdr_int)) {
 		return (TRUE);
 	}
 	return (FALSE);
@@ -240,6 +239,7 @@ static void
 authunix_nextverf(auth)
 	struct AUTH_struct *auth;
 {
+	XDR_RPC_UNUSED(auth);
 	/* no action necessary */
 }
 

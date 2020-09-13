@@ -60,6 +60,7 @@ static char sccsid[] = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 #include "rpc/auth.h"
 #include "rpc/rpc_msg.h"
 #include <rpc/clnt.h>
+#include "mini_xdr_rpc_src_private.h"
 
 
 /* * * * * * * * * * * * * * XDR Authentication * * * * * * * * * * * */
@@ -72,10 +73,9 @@ MINI_XDR_BEGIN_C_DECLS
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_opaque_auth(xdrs, ap)
-	register XDR *xdrs;
-	register struct opaque_auth *ap;
+xdr_opaque_auth(XDR_RPC_REGISTER XDR * xdrs, void* app, ...)
 {
+	register struct opaque_auth *ap =  (struct opaque_auth *)app;
 
 	if (xdr_enum(xdrs, &(ap->oa_flavor)))
 		return (xdr_bytes(xdrs, &ap->oa_base,
@@ -86,26 +86,26 @@ xdr_opaque_auth(xdrs, ap)
 /*
  * XDR a DES block
  */
-MINI_XDR_EXPORT
-bool_t
-xdr_des_block(xdrs, blkp)
-	register XDR *xdrs;
-	register des_block *blkp;
-{
-	return (xdr_opaque(xdrs, (caddr_t)blkp, sizeof(des_block)));
-}
+//MINI_XDR_EXPORT // no need to export
+//static
+//bool_t
+//xdr_des_block(XDR_RPC_REGISTER XDR * xdrs, void* blkpp, ...)
+//{
+//	register des_block *blkp = (des_block*)blkpp;
+//	return (xdr_opaque(xdrs, (caddr_t)blkp, sizeof(des_block)));
+//}
 
 /* * * * * * * * * * * * * * XDR RPC MESSAGE * * * * * * * * * * * * * * * */
 
 /*
  * XDR the MSG_ACCEPTED part of a reply message union
  */
-MINI_XDR_EXPORT
+//MINI_XDR_EXPORT // no need to export
+static
 bool_t 
-xdr_accepted_reply(xdrs, ar)
-	register XDR *xdrs;   
-	register struct accepted_reply *ar;
+xdr_accepted_reply(XDR_RPC_REGISTER XDR * xdrs, void* arp, ...)
 {
+	register struct accepted_reply *ar = (struct accepted_reply *)arp;
 
 	/* personalized union, rather than calling xdr_union */
 	if (! xdr_opaque_auth(xdrs, &(ar->ar_verf)))
@@ -131,12 +131,12 @@ xdr_accepted_reply(xdrs, ar)
 /*
  * XDR the MSG_DENIED part of a reply message union
  */
-MINI_XDR_EXPORT
+//MINI_XDR_EXPORT // no need to export
+static
 bool_t 
-xdr_rejected_reply(xdrs, rr)
-	register XDR *xdrs;
-	register struct rejected_reply *rr;
+xdr_rejected_reply(XDR_RPC_REGISTER XDR * xdrs, void* rrp, ...)
 {
+	register struct rejected_reply *rr = (struct rejected_reply *)rrp;
 
 	/* personalized union, rather than calling xdr_union */
 	if (! xdr_enum(xdrs, (enum_t *)&(rr->rj_stat)))
@@ -159,8 +159,8 @@ xdr_rejected_reply(xdrs, rr)
 }
 
 static struct xdr_discrim reply_dscrm[3] = {
-	{ (int)MSG_ACCEPTED, (xdrproc_t)xdr_accepted_reply },
-	{ (int)MSG_DENIED, (xdrproc_t)xdr_rejected_reply },
+	{ (int)MSG_ACCEPTED, xdr_accepted_reply },
+	{ (int)MSG_DENIED, xdr_rejected_reply },
 	{ __dontcare__, NULL_xdrproc_t } };
 
 /*
@@ -172,12 +172,14 @@ xdr_replymsg(xdrs, rmsg)
 	register XDR *xdrs;
 	register struct rpc_msg *rmsg;
 {
-	if (
-		xdr_u_long(xdrs, &(rmsg->rm_xid)) &&
-	    xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) &&
-	    (rmsg->rm_direction == REPLY) )
-		return (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),
-		   (caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL_xdrproc_t));
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	if (xdr_u_long(xdrs, &(rmsg->rm_xid)) && xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) && (rmsg->rm_direction == REPLY) ){
+		bool_t bRet;
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		bRet = (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),(caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL_xdrproc_t));
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		return bRet;
+	}
 	return (FALSE);
 }
 

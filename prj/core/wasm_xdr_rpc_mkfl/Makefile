@@ -12,6 +12,7 @@ SOURCES_BASE_DIR	= $(mkfile_dir)/../../../src/core
 
 
 CC = emcc
+CPP = em++
 LINK = emar r
 #CPP = arm-linux-gnueabihf-g++
 #LINK = arm-linux-gnueabihf-g++
@@ -30,6 +31,7 @@ CPARAMS = -O2 -DLINUX -D_REENTRANT -D_GNU_SOURCE -D_BSD -D__USE_GNU -D__USE_UNIX
 CPARAMS += -DMULTITHREADED
 CPARAMS += -I$(mkfile_dir)/../../../include -fPIC
 CPARAMS += $(WASM_MULTITHREADED_FLAGS)
+CPPPARAMS = $(CPARAMS)
 
 
 # $(OBJECT_FILES_DIR)/shmalloc.o # shared memory routines for windows
@@ -38,8 +40,10 @@ CPARAMS += $(WASM_MULTITHREADED_FLAGS)
 
 # $(OBJECT_FILES_DIR)/clnt_per.o
 # $(OBJECT_FILES_DIR)/clnt_per_singlethreaded.o
+# $(OBJECT_FILES_DIR)/mini_xdr_rpc_missing_functions.o
 
 OBJECTS		+=	\
+	$(OBJECT_FILES_DIR)/emscripten_threading.o				\
 	$(OBJECT_FILES_DIR)/auth_non.o							\
 	$(OBJECT_FILES_DIR)/auth_uni.o							\
 	$(OBJECT_FILES_DIR)/clnt_gen.o							\
@@ -47,7 +51,6 @@ OBJECTS		+=	\
 	$(OBJECT_FILES_DIR)/clnt_tcp.o							\
 	$(OBJECT_FILES_DIR)/clnt_udp.o							\
 	$(OBJECT_FILES_DIR)/mini_xdr_rpc_entry.o					\
-	$(OBJECT_FILES_DIR)/mini_xdr_rpc_missing_functions.o		\
 	$(OBJECT_FILES_DIR)/pmap_get.o							\
 	$(OBJECT_FILES_DIR)/rpc_prot.o							\
 	$(OBJECT_FILES_DIR)/xdr.o									\
@@ -66,6 +69,10 @@ testVars:
 $(OBJECT_FILES_DIR)/%.o: $(SOURCES_BASE_DIR)/%.c
 	mkdir -p $(@D)
 	$(CC) $(CPARAMS) -o $@ -c $<
+	
+$(OBJECT_FILES_DIR)/%.o: $(SOURCES_BASE_DIR)/%.cpp
+	mkdir -p $(@D)
+	$(CPP) $(CPPPARAMS) -o $@ -c $<
 
 
 $(TARGET_NAME): $(OBJECTS)

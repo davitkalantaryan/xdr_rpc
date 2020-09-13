@@ -99,10 +99,9 @@ static struct sgl_limits {
 
 MINI_XDR_EXPORT
 bool_t
-xdr_float(xdrs, fp)
-	register XDR *xdrs;
-	register float *fp;
+xdr_float(XDR_RPC_REGISTER XDR * xdrs, void* fpp, ...)
 {
+	register float *fp = (float*)fpp;
 
 #if !defined(X86_AND_FRIENDS_DEFINED)
 	struct ieee_single is;
@@ -206,10 +205,9 @@ static struct dbl_limits {
 
 MINI_XDR_EXPORT
 bool_t
-xdr_double(xdrs, dp)
-	register XDR *xdrs;
-	double *dp;
+xdr_double(XDR_RPC_REGISTER XDR * xdrs, void* dpp, ...)
 {
+	register double* dp = (double*)dpp;
 	register long *lp;
 #if !defined(X86_AND_FRIENDS_DEFINED)
 	struct	ieee_double id;
