@@ -62,15 +62,17 @@ static struct timeval tottimeout = { 60, 0 };
 
 MINI_XDR_EXPORT
 bool_t
-xdr_pmap(xdrs, regs)
-	XDR *xdrs;
-	struct pmap *regs;
+xdr_pmap(XDR *xdrs, void* vpregs, ...)	
 {
-
+	struct pmap *regs = (struct pmap *)vpregs;
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	if (xdr_u_long(xdrs, &regs->pm_prog) && 
 		xdr_u_long(xdrs, &regs->pm_vers) && 
-		xdr_u_long(xdrs, &regs->pm_prot))
+	    xdr_u_long(xdrs, &regs->pm_prot)){
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		return (xdr_u_long(xdrs, &regs->pm_port));
+	}
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	return (FALSE);
 }
 
@@ -81,7 +83,7 @@ xdr_pmap(xdrs, regs)
  */
 MINI_XDR_EXPORT
 u_short
-pmap_getport(address, program, version, protocol)
+pmap_getport_udp(address, program, version, protocol)
 	struct sockaddr_in *address;
 	u_long program;
 	u_long version;
@@ -91,25 +93,82 @@ pmap_getport(address, program, version, protocol)
 	int socket = -1;
 	register CLIENT *client;
 	struct pmap parms;
+    
+    XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	address->sin_port = htons(PMAPPORT);
-	client = clntudp_bufcreate(address, PMAPPROG,
-	    PMAPVERS, timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+    XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	client = clntudp_bufcreate(address, PMAPPROG,PMAPVERS, timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+    XDR_RPC_DEBUG("file:%s,line:%d,client=%p\n",__FILE__,__LINE__,(void*)client);
 	if (client != (CLIENT *)NULL) {
+        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		parms.pm_prog = program;
 		parms.pm_vers = version;
 		parms.pm_prot = protocol;
 		parms.pm_port = 0;  /* not needed or used */
+		XDR_RPC_DEBUG("file:%s,line:%d,client->cl_ops->cl_call:%p,&xdr_pmap=%p\n",__FILE__,__LINE__,(void*)client->cl_ops->cl_call,(void*)&xdr_pmap);
 		if (CLNT_CALL(client, PMAPPROC_GETPORT, xdr_pmap, (caddr_t)&parms,xdr_u_short, (caddr_t)&port, tottimeout) != RPC_SUCCESS){
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
 			clnt_geterr(client, &rpc_createerr.cf_error);
 		} else if (port == 0) {
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 			rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
 		}
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		CLNT_DESTROY(client);
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	}
 	(void)closesocket(socket);
 	address->sin_port = 0;
+    XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	return (port);
+}
+	
+	
+	
+/*
+ * Find the mapped port for program,version.
+ * Calls the pmap service remotely to do the lookup.
+ * Returns 0 if no map exists.
+ */
+MINI_XDR_EXPORT
+u_short
+pmap_getport(struct sockaddr_in * address, u_long program, u_long version, u_int protocol)
+{
+	u_short port = 0;
+	int socket = -1;
+	register CLIENT *client;
+	struct pmap parms;
+	
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+
+	address->sin_port = htons(PMAPPORT);
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	client = clnttcp_create(address, PMAPPROG,PMAPVERS, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+	XDR_RPC_DEBUG("file:%s,line:%d,client=%p\n",__FILE__,__LINE__,(void*)client);
+	if (client != (CLIENT *)NULL) {
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		parms.pm_prog = program;
+		parms.pm_vers = version;
+		parms.pm_prot = protocol;
+		parms.pm_port = 0;  /* not needed or used */
+		XDR_RPC_DEBUG("file:%s,line:%d,client->cl_ops->cl_call:%p,&xdr_pmap=%p\n",__FILE__,__LINE__,(void*)client->cl_ops->cl_call,(void*)&xdr_pmap);
+		if (CLNT_CALL(client, PMAPPROC_GETPORT, &xdr_pmap, (caddr_t)&parms,&xdr_u_short, (caddr_t)&port, tottimeout) != RPC_SUCCESS){
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
+			clnt_geterr(client, &rpc_createerr.cf_error);
+		} else if (port == 0) {
+			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+			rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
+		}
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		CLNT_DESTROY(client);
+		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	}
+	(void)closesocket(socket);
+	address->sin_port = 0;
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	return (port);
 }
 

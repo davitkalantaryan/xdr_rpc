@@ -35,6 +35,7 @@
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/auth.h>
 #include "rpc/xdr.h"
+#include <rpc/clnt.h>
 
 
 /*
@@ -76,7 +77,8 @@ enum accept_stat {
 
 enum reject_stat {
 	RPC_MISMATCH=0,
-	AUTH_ERROR=1
+	AUTH_ERROR=1,
+	RPC_VERSMISMATCH_REJ_STAT=RPC_VERSMISMATCH
 };
 
 /*
@@ -194,6 +196,7 @@ MINI_XDR_EXPORT bool_t	xdr_replymsg __P((XDR *__xdrs, struct rpc_msg *__rmsg));
  * 	struct rpc_msg *msg;
  * 	struct rpc_err *error;
  */
+struct rpc_err;
 MINI_XDR_EXPORT void	_seterr_reply __P((struct rpc_msg *__msg,struct rpc_err *__error));
 
 MINI_XDR_END_C_DECLS

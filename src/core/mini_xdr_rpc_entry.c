@@ -2,12 +2,17 @@
 // file:			doocs_rpc_entry.c
 //
 #include <rpc/wrpc_first_com_include.h>
+#ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
+#else
+#endif
 
 
 MINI_XDR_BEGIN_C_DECLS
+
+#ifdef _WIN32
 
 #pragma section(".CRT$XCU",read)
 #define INITIALIZER_RAW_(f,p) \
@@ -54,6 +59,8 @@ XDR_MINI_INITIALIZER(MiniXdrRpcInitializationRoutine)
 
 	atexit(&MiniXdrRpcCleanupRoutine);
 }
+
+#endif  // #ifdef _WIN32
 
 
 MINI_XDR_END_C_DECLS

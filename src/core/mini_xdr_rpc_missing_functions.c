@@ -4,12 +4,15 @@
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <time.h>
+#include <rpc/doocs_rpc_unix_like_functions.h>
+#ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
-#include <time.h>
-#include <rpc/doocs_rpc_unix_like_functions.h>
 #include <process.h>
+#else
+#endif
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
@@ -32,6 +35,7 @@ MINI_XDR_BEGIN_C_DECLS
 // maybe this function we will need also for DOOCS
 // for time being this static
 MINI_XDR_EXPORT_UNIX_LIKE
+#ifdef _WIN32
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
 	static void* spPointer = NULL;
@@ -78,6 +82,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 	return 0;
 }
 
+#endif
+
 #endif  // #ifndef gettimeofday_is_not_needed
 
 
@@ -88,6 +94,9 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 /*
  * Bind a socket to a privileged IP port
  */
+
+#ifdef _WIN32
+
 MINI_XDR_EXPORT
 int bindresvport(int sd, struct sockaddr_in * sin)
 {
@@ -125,5 +134,7 @@ int bindresvport(int sd, struct sockaddr_in * sin)
 	return (res);
 }
 
+
+#endif  // #ifdef _WIN32
 
 MINI_XDR_END_C_DECLS

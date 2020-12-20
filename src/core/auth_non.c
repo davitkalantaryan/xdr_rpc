@@ -119,11 +119,13 @@ authnone_marshal(client, xdrs)
 	XDR *xdrs;
 {
 	register struct authnone_private *ap = authnone_private;
+	
+	XDR_RPC_UNUSED(client);
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	if (ap == 0)
 		return (0);
-	return ((*xdrs->x_ops->x_putbytes)(xdrs,
-	    ap->marshalled_client, ap->mcnt));
+	return ((*xdrs->x_ops->x_putbytes)(xdrs,ap->marshalled_client, ap->mcnt));
 }
 
 static void 

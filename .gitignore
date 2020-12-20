@@ -6,9 +6,22 @@
 sys
 
 prj/*/*/*
-prj/*/*/.vs
-!prj/*/*/*.sln
-!prj/*/*/*.vcxproj
-!prj/*/*/*.vcxproj.filters
-!prj/*/*/*.props
+!prj/*/*_vs/*.sln
+!prj/*/*_vs/*.vcxproj
+!prj/*/*_vs/*.vcxproj.filters
+!prj/*/*_vs/*.props
+#
+!prj/*/*_qt/*.pro
+!prj/*/*_qt/*.pri
+#
+!prj/*/*_mkfl/*Makefile*
+
 compile_result_*.txt
+
+workspaces/*/*
+!workspaces/*_vs/*.sln
+!workspaces/*_vs/*.vcxproj
+!workspaces/*_vs/*.vcxproj.filters
+!workspaces/*_vs/*.props
+!workspaces/*_qt/*.pro
+!workspaces/*_qt/*.pri

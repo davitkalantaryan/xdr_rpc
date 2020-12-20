@@ -104,14 +104,15 @@ struct audata {
  * Create a unix style authenticator.
  * Returns an auth handle with the given stuff in it.
  */
+// MINI_XDR_EXPORT AUTH * authunix_create(char* machname, uid_t uid, gid_t gid, int len, gid_t * aup_gids);
 MINI_XDR_EXPORT
 AUTH *
 authunix_create(machname, uid, gid, len, aup_gids)
 	char *machname;
-	int uid;
-	int gid;
-	register int len;
-	int *aup_gids;
+	uid_t uid;
+	gid_t gid;
+	int len;
+	gid_t *aup_gids;
 {
 	struct authunix_parms aup;
 	char mymem[MAX_AUTH_BYTES];
@@ -215,17 +216,16 @@ authunix_create_default(void)
 
 MINI_XDR_EXPORT
 bool_t
-xdr_authunix_parms(xdrs, p)
-register XDR* xdrs;
-register struct authunix_parms* p;
+xdr_authunix_parms(XDR_RPC_REGISTER XDR * xdrs, void* pp, ...)
 {
+	register struct authunix_parms* p = (struct authunix_parms*)pp;
 
 	if (xdr_u_long(xdrs, &(p->aup_time))
 		&& xdr_string(xdrs, &(p->aup_machname), MAX_MACHINE_NAME)
-		&& xdr_int(xdrs, &(p->aup_uid))
-		&& xdr_int(xdrs, &(p->aup_gid))
+		&& xdr_u_int(xdrs, &(p->aup_uid))
+		&& xdr_u_int(xdrs, &(p->aup_gid))
 		&& xdr_array(xdrs, (caddr_t*) & (p->aup_gids),
-			&(p->aup_len), NGRPS, sizeof(int), xdr_int)) {
+			&(p->aup_len), NGRPS, sizeof(int), &xdr_int)) {
 		return (TRUE);
 	}
 	return (FALSE);
@@ -239,6 +239,7 @@ static void
 authunix_nextverf(auth)
 	struct AUTH_struct *auth;
 {
+	XDR_RPC_UNUSED(auth);
 	/* no action necessary */
 }
 
@@ -300,7 +301,7 @@ authunix_refresh(auth)
 
 	/* first deserialize the creds back into a struct authunix_parms */
 	aup.aup_machname = NULL;
-	aup.aup_gids = (int *)NULL;
+	aup.aup_gids = NULL;
 	xdrmem_create(&xdrs, au->au_origcred.oa_base,
 	    au->au_origcred.oa_length, XDR_DECODE);
 	stat = xdr_authunix_parms(&xdrs, &aup);
@@ -341,7 +342,8 @@ authunix_destroy(auth)
 	if (auth->ah_verf.oa_base != NULL)
 		mem_free(auth->ah_verf.oa_base, auth->ah_verf.oa_length);
 
-	mem_free((caddr_t)auth, sizeof(*auth));
+	//mem_free((caddr_t)auth, sizeof(*auth));
+	mem_free(auth, sizeof(*auth));
 }
 
 /*

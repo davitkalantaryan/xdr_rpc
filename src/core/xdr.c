@@ -56,8 +56,10 @@ static char sccsid[] = "@(#)xdr.c 1.35 87/08/12";
 #include <stdio.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-#include <malloc.h> /// Added by DK
-#include <string.h> /// Added by DK
+#include <malloc.h>
+#include <string.h>
+#include <stdarg.h>
+#include "mini_xdr_rpc_src_private.h"
 
 
 /*
@@ -97,11 +99,12 @@ xdr_free(proc, objp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_void(XDR *xdrs)
+xdr_void(XDR *xdrs,void* p, ...)
 	/* XDR *xdrs; */
 	/* caddr_t addr; */
 {
-
+	XDR_RPC_UNUSED(xdrs);
+	XDR_RPC_UNUSED(p);
 	return (TRUE);
 }
 
@@ -111,18 +114,17 @@ xdr_void(XDR *xdrs)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_int(xdrs, ip)
-	XDR *xdrs;
-	int *ip;
+xdr_int(XDR * xdrs, void* ipp, ...)
 {
+	int *ip = (int *)ipp;
 #ifdef lint
 	(void) (xdr_short(xdrs, (short *)ip));
 	return (xdr_long(xdrs, (long *)ip));
 #else
 	if (sizeof (int) == sizeof (long)) {
-		return (xdr_long(xdrs, (long *)ip));
+		return (xdr_long(xdrs,ip));
 	} else {
-		return (xdr_short(xdrs, (short *)ip));
+		return (xdr_short(xdrs,ip));
 	}
 #endif
 }
@@ -133,18 +135,17 @@ xdr_int(xdrs, ip)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_u_int(xdrs, up)
-	XDR *xdrs;
-	u_int *up;
+xdr_u_int(XDR * xdrs, void* upp, ...)
 {
+	u_int *up = (u_int *)upp;
 #ifdef lint
 	(void) (xdr_short(xdrs, (short *)up));
 	return (xdr_u_long(xdrs, (u_long *)up));
 #else
 	if (sizeof (u_int) == sizeof (u_long)) {
-		return (xdr_u_long(xdrs, (u_long *)up));
+		return (xdr_u_long(xdrs, up));
 	} else {
-		return (xdr_short(xdrs, (short *)up));
+		return (xdr_short(xdrs, up));
 	}
 #endif
 }
@@ -156,10 +157,9 @@ xdr_u_int(xdrs, up)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_long(xdrs, lp)
-	register XDR *xdrs;
-	long *lp;
+xdr_long(XDR * xdrs, void* lpp, ...)
 {
+	long *lp = (long *)lpp;
 
 	if (xdrs->x_op == XDR_ENCODE)
 		return (XDR_PUTLONG(xdrs, lp));
@@ -176,11 +176,9 @@ xdr_long(xdrs, lp)
 
 MINI_XDR_EXPORT
 bool_t
-xdr_long_as_ptrdiff_t(xdrs, lp)
-	register XDR *xdrs;
-	ptrdiff_t *lp;
+xdr_long_as_ptrdiff_t(XDR * xdrs, void* lpp, ...)
 {
-
+	ptrdiff_t *lp = (ptrdiff_t *)lpp;
 	int bRet = FALSE;
 	long longVal = lp?(long)*lp:0;
 	if (xdrs->x_op == XDR_ENCODE)
@@ -205,10 +203,9 @@ xdr_long_as_ptrdiff_t(xdrs, lp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_u_long(xdrs, ulp)
-	register XDR *xdrs;
-	u_long *ulp;
+xdr_u_long(XDR * xdrs, void* ulpp, ...)
 {
+	u_long *ulp = (u_long *)ulpp;
 	if (xdrs->x_op == XDR_DECODE)
 		return (XDR_GETLONG(xdrs, (long*)ulp));
 	if (xdrs->x_op == XDR_ENCODE)
@@ -225,10 +222,9 @@ xdr_u_long(xdrs, ulp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_u_long_as_size_t(xdrs, ulp)
-	register XDR *xdrs;
-	size_t *ulp;
+xdr_u_long_as_size_t(XDR * xdrs, void* ulpp, ...)
 {
+	size_t *ulp = (size_t *)ulpp;
 	int bRet = FALSE;
 	long longVal = ulp?(long)*ulp:0;
 	if (xdrs->x_op == XDR_DECODE)
@@ -237,17 +233,16 @@ xdr_u_long_as_size_t(xdrs, ulp)
 		return (XDR_PUTLONG(xdrs, &longVal));
 	if (xdrs->x_op == XDR_FREE)
 		return (TRUE);
-	if (ulp) { *ulp = longVal; }
+	if (ulp) { *ulp = (size_t)longVal; }
 	return bRet;
 }
 
 
 MINI_XDR_EXPORT
 bool_t
-xdr_u_long_as_unsigned_long(xdrs, ulp)
-	register XDR *xdrs;
-	unsigned long *ulp;
+xdr_u_long_as_unsigned_long(XDR * xdrs, void* ulpp, ...)
 {
+	unsigned long *ulp = (unsigned long *)ulpp;
 	int bRet = FALSE;
 	long longVal = ulp?(long)*ulp:0;
 	if (xdrs->x_op == XDR_DECODE)
@@ -256,7 +251,7 @@ xdr_u_long_as_unsigned_long(xdrs, ulp)
 		return (XDR_PUTLONG(xdrs, &longVal));
 	if (xdrs->x_op == XDR_FREE)
 		return (TRUE);
-	if (ulp) { *ulp = longVal; }
+	if (ulp) { *ulp = (unsigned long)longVal; }
 	return bRet;
 }
 
@@ -266,10 +261,9 @@ xdr_u_long_as_unsigned_long(xdrs, ulp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_short(xdrs, sp)
-	register XDR *xdrs;
-	short *sp;
+xdr_short(XDR_RPC_REGISTER XDR * xdrs, void* spp, ...)
 {
+	short *sp = (short *)spp;
 	long l;
 
 	switch (xdrs->x_op) {
@@ -297,16 +291,17 @@ xdr_short(xdrs, sp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_u_short(xdrs, usp)
-	register XDR *xdrs;
-	u_short *usp;
+xdr_u_short(XDR_RPC_REGISTER XDR * xdrs, void* uspp, ...)
 {
-	u_long l;
+	u_short *usp = (u_short *)uspp;
+	long l;
+	
+	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 
 	switch (xdrs->x_op) {
 
 	case XDR_ENCODE:
-		l = (u_long) *usp;
+		l = (long) *usp;
 		return (XDR_PUTLONG(xdrs, &l));
 
 	case XDR_DECODE:
@@ -328,17 +323,16 @@ xdr_u_short(xdrs, usp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_char(xdrs, cp)
-	XDR *xdrs;
-	char *cp;
+xdr_char(XDR * xdrs, void* cpp, ...)
 {
+	char *cp = (char *)cpp;
 	int i;
 
 	i = (*cp);
 	if (!xdr_int(xdrs, &i)) {
 		return (FALSE);
 	}
-	*cp = i;
+	*cp = (char)i;
 	return (TRUE);
 }
 
@@ -348,17 +342,16 @@ xdr_char(xdrs, cp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_u_char(xdrs, cp)
-	XDR *xdrs;
-	char *cp;
+xdr_u_char(XDR * xdrs, void* ucpp, ...)
 {
+	u_char *ucp = (u_char *)ucpp;
 	u_int u;
 
-	u = (*cp);
+	u = (*ucp);
 	if (!xdr_u_int(xdrs, &u)) {
 		return (FALSE);
 	}
-	*cp = u;
+	*ucp = (u_char)u;
 	return (TRUE);
 }
 
@@ -368,10 +361,9 @@ xdr_u_char(xdrs, cp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_bool(xdrs, bp)
-	register XDR *xdrs;
-	bool_t *bp;
+xdr_bool(XDR_RPC_REGISTER XDR * xdrs, void* bpp, ...)
 {
+	bool_t *bp = (bool_t *)bpp;
 	long lb;
 
 	switch (xdrs->x_op) {
@@ -399,10 +391,9 @@ xdr_bool(xdrs, bp)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_enum(xdrs, ep)
-	XDR *xdrs;
-	enum_t *ep;
+xdr_enum(XDR * xdrs, void* epp, ...)
 {
+	enum_t *ep = (enum_t *)epp;
 #ifndef lint
 	enum sizecheck { SIZEVAL };	/* used to find the size of an enum */
 
@@ -430,13 +421,17 @@ xdr_enum(xdrs, ep)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_opaque(xdrs, cp, cnt)
-	register XDR *xdrs;
-	caddr_t cp;
-	register u_int cnt;
+xdr_opaque(XDR_RPC_REGISTER XDR * xdrs, void* cpp, ...)
 {
+	caddr_t cp = (caddr_t )cpp;
+	va_list ap;
+	register u_int cnt;
 	register u_int rndup;
-	static crud[BYTES_PER_XDR_UNIT];
+	static char crud[BYTES_PER_XDR_UNIT];
+	
+	va_start(ap, cpp);
+	cnt = va_arg(ap,u_int);
+	va_end(ap);
 
 	/*
 	 * if no data we are done
@@ -484,14 +479,19 @@ xdr_opaque(xdrs, cp, cnt)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_bytes(xdrs, cpp, sizep, maxsize)
-	register XDR *xdrs;
-	char **cpp;
+xdr_bytes(XDR_RPC_REGISTER XDR * xdrs, void* cppp, ...)
+{
+	char** cpp = (char** )cppp;
+	va_list ap;
 	register u_int *sizep;
 	u_int maxsize;
-{
 	register char *sp = *cpp;  /* sp is the actual string pointer */
 	register u_int nodesize;
+	
+	va_start(ap, cppp);
+	sizep = va_arg(ap,u_int*);
+	maxsize = va_arg(ap,u_int);
+	va_end(ap);
 
 	/*
 	 * first deal with the length since xdr bytes are counted
@@ -541,10 +541,9 @@ xdr_bytes(xdrs, cpp, sizep, maxsize)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_netobj(xdrs, np)
-	XDR *xdrs;
-	struct netobj *np;
+xdr_netobj(XDR * xdrs, void* npp, ...)
 {
+	struct netobj *np = (struct netobj *)npp;
 	return (xdr_bytes(xdrs, &np->n_bytes, &np->n_len, MAX_NETOBJ_SZ));
 }
 
@@ -562,14 +561,22 @@ xdr_netobj(xdrs, np)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_union(xdrs, dscmp, unp, choices, dfault)
-	register XDR *xdrs;
-	enum_t *dscmp;		/* enum to decide which arm to work on */
+xdr_union(XDR_RPC_REGISTER XDR * xdrs, void* dscmpp, ...)
+{
+	enum_t* dscmp = (enum_t* )dscmpp;
+	va_list ap;
+	
 	char *unp;		/* the union itself */
 	struct xdr_discrim *choices;	/* [value, xdr proc] for each arm */
 	xdrproc_t dfault;	/* default xdr routine */
-{
+	
 	register enum_t dscm;
+	
+	va_start(ap, dscmpp);
+	unp = va_arg(ap,char*);
+	choices = va_arg(ap,struct xdr_discrim *);
+	dfault = va_arg(ap,xdrproc_t);
+	va_end(ap);
 
 	/*
 	 * we deal with the discriminator;  it's an enum
@@ -612,14 +619,19 @@ xdr_union(xdrs, dscmp, unp, choices, dfault)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_string(xdrs, cpp, maxsize)
-	register XDR *xdrs;
-	char **cpp;
-	u_int maxsize;
+xdr_string(XDR_RPC_REGISTER XDR * xdrs, void* cppp, ...)
 {
+	char** cpp = (char** )cppp;
+	va_list ap;
+	u_int maxsize;
+	
 	register char *sp = *cpp;  /* sp is the actual string pointer */
 	u_int size;
 	u_int nodesize;
+	
+	va_start(ap, cppp);
+	maxsize = va_arg(ap,u_int);
+	va_end(ap);
 
 	/*
 	 * first deal with the length since xdr strings are counted-strings
@@ -632,6 +644,10 @@ xdr_string(xdrs, cpp, maxsize)
 		/* fall through... */
 	case XDR_ENCODE:
 		size = (u_int)strlen(sp);
+		break;
+		
+	default:
+		fprintf(stderr,"%s default:\n",__FUNCTION__);
 		break;
 	}
 	if (! xdr_u_int(xdrs, &size)) {
@@ -677,10 +693,9 @@ xdr_string(xdrs, cpp, maxsize)
  */
 MINI_XDR_EXPORT
 bool_t
-xdr_wrapstring(xdrs, cpp)
-	XDR *xdrs;
-	char **cpp;
+xdr_wrapstring(XDR * xdrs, void* cppp, ...)
 {
+	char** cpp = (char** )cppp;
 	if (xdr_string(xdrs, cpp, LASTUNSIGNED)) {
 		return (TRUE);
 	}
