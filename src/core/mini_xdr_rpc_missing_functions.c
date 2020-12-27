@@ -100,11 +100,22 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 MINI_XDR_EXPORT
 int bindresvport(int sd, struct sockaddr_in * sin)
 {
+#if 1
+	int i = 1;
+	
+	//setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char*)&i,sizeof(int));
+	(void)sd;
+	(void)sin;
+
+	return 0;
+#else
 	int res;
 	static short port;
 	struct sockaddr_in myaddr;
 	//int my_errno;
-	int i;
+	int i=1;
+
+	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char*)&i, sizeof(int));
 
 #define STARTPORT 600
 #define ENDPORT (IPPORT_RESERVED - 1)
@@ -132,6 +143,7 @@ int bindresvport(int sd, struct sockaddr_in * sin)
 		errno = WSAGetLastError();
 	}
 	return (res);
+#endif
 }
 
 
