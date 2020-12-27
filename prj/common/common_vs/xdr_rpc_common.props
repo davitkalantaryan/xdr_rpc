@@ -25,6 +25,7 @@
     <Link>
       <AdditionalLibraryDirectories>$(UDOOCSROOT)\dev\arch\$(PROCESSOR_ARCHITECTURE)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DOOCSapi.lib;wlac.lib</AdditionalDependencies>
+      <ImportLibrary>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\lib\$(ProjectName).lib</ImportLibrary>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
