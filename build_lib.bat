@@ -37,7 +37,7 @@ for %%x in (%*) do (
 )
 
 echo action=%ActionConfirm%,platform=%PlatformTarget%,configuration=%Configuration%
-msbuild %scriptDirectory%prj\core\doocs_xdr_rpc_vs\doocs_xdr_rpc.sln /t:!ActionConfirm! /p:Configuration=!Configuration! /p:Platform=!PlatformTarget!
+msbuild %scriptDirectory%prj\core\xdr_rpc_vs\xdr_rpc.sln /t:!ActionConfirm! /p:Configuration=!Configuration! /p:Platform=!PlatformTarget!
 exit /b 0
 
 :parse_argument

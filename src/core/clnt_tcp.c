@@ -222,7 +222,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * If no socket given, open one
 	 */
 	if (*sockp < 0) {
-		*sockp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		*sockp = (int)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
 		if ((*sockp < 0)|| (connect(*sockp, (struct sockaddr *)raddr,sizeof(*raddr)) < 0)) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;

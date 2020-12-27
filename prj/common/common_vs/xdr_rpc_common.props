@@ -4,10 +4,15 @@
   <PropertyGroup Label="UserMacros">
     <DoocsVersion>20.2.0.01</DoocsVersion>
     <MiniXdrRpcVersion>2.0.0</MiniXdrRpcVersion>
+    <XdrRpcConfigurationExtension Condition="'$(Configuration)'=='Debug'">d</XdrRpcConfigurationExtension>
+    <XdrRpcConfigurationExtension Condition="'$(Configuration)'=='Release'">r</XdrRpcConfigurationExtension>
+    <XdrRpcFullVersion>$(MiniXdrRpcVersion)-$(PlatformTarget)-e$(XdrRpcConfigurationExtension)</XdrRpcFullVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <IntDir>..\..\..\sys\$(TargetFolderBase)\.objects\$(ProjectName)\</IntDir>
+    <IntDir>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\.objects\$(ProjectName)\</IntDir>
     <SourcePath>$(UDOOCSROOT)\dev\src\clientlib\pktrclntlib;$(UDOOCSROOT)\dev\src\clientlib;$(SourcePath)</SourcePath>
+    <TargetName>$(ProjectName).$(XdrRpcFullVersion)</TargetName>
+    <OutDir>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\dll\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
