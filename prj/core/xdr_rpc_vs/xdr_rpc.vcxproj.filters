@@ -22,6 +22,9 @@
     <Filter Include="other\src\core">
       <UniqueIdentifier>{22e4ed17-8779-445e-bb20-975bd8323747}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\for_server">
+      <UniqueIdentifier>{c7adf404-429b-487e-baa3-8e0cc59d5469}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\core\auth_non.c">
@@ -72,6 +75,27 @@
     <ClCompile Include="..\..\..\src\core\xdr_reference.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\pmap_cln.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\svc.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\get_myad.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\svc_auth.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\svc_autu.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\svc_tcp.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\rpc_call.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\core\mini_xdr_rpc_src_private.h">
@@ -120,6 +144,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\rpc\xdr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\rpc\svc_soc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

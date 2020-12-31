@@ -274,6 +274,13 @@
     <ClCompile Include="..\..\..\src\core\clnt_per.c" />
     <ClCompile Include="..\..\..\src\core\clnt_tcp.c" />
     <ClCompile Include="..\..\..\src\core\clnt_udp.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\get_myad.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\pmap_cln.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\rpc_call.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\svc.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\svc_auth.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\svc_autu.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\svc_tcp.c" />
     <ClCompile Include="..\..\..\src\core\mini_xdr_rpc_entry.c" />
     <ClCompile Include="..\..\..\src\core\mini_xdr_rpc_missing_functions.c" />
     <ClCompile Include="..\..\..\src\core\pmap_get.c" />
@@ -298,6 +305,7 @@
     <ClInclude Include="..\..\..\include\rpc\rpc_msg.h" />
     <ClInclude Include="..\..\..\include\rpc\svc.h" />
     <ClInclude Include="..\..\..\include\rpc\svc_auth.h" />
+    <ClInclude Include="..\..\..\include\rpc\svc_soc.h" />
     <ClInclude Include="..\..\..\include\rpc\types.h" />
     <ClInclude Include="..\..\..\include\rpc\wrpc_first_com_include.h" />
     <ClInclude Include="..\..\..\include\rpc\xdr.h" />
