@@ -1,0 +1,78 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xdr_rpc", "xdr_rpc.vcxproj", "{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{C29B5904-1251-4D15-AEEB-C1EC0D400566}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\.gitignore = ..\..\.gitignore
+		..\..\.gitmodules = ..\..\.gitmodules
+		..\..\meson.build = ..\..\meson.build
+		..\..\msbuild_all.bat = ..\..\msbuild_all.bat
+		..\..\README.md = ..\..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{7157CD3F-776D-4E1F-B7FB-2D65691F9452}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xdr_rpc", "..\..\prj\core\xdr_rpc_vs\xdr_rpc.vcxproj", "{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5} = {5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|ARM.ActiveCfg = Debug|ARM
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|ARM.Build.0 = Debug|ARM
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|ARM64.Build.0 = Debug|ARM64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|x64.ActiveCfg = Debug|x64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|x64.Build.0 = Debug|x64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|x86.ActiveCfg = Debug|Win32
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Debug|x86.Build.0 = Debug|Win32
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|ARM.ActiveCfg = Release|ARM
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|ARM.Build.0 = Release|ARM
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|ARM64.ActiveCfg = Release|ARM64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|ARM64.Build.0 = Release|ARM64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|x64.ActiveCfg = Release|x64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|x64.Build.0 = Release|x64
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|x86.ActiveCfg = Release|Win32
+		{5F575CCD-7499-40D1-83CC-7DB4D01D9AE5}.Release|x86.Build.0 = Release|Win32
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|ARM.ActiveCfg = Debug|ARM
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|ARM.Build.0 = Debug|ARM
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|ARM64.Build.0 = Debug|ARM64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|x64.ActiveCfg = Debug|x64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|x64.Build.0 = Debug|x64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|x86.ActiveCfg = Debug|Win32
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Debug|x86.Build.0 = Debug|Win32
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|ARM.ActiveCfg = Release|ARM
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|ARM.Build.0 = Release|ARM
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|ARM64.ActiveCfg = Release|ARM64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|ARM64.Build.0 = Release|ARM64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|x64.ActiveCfg = Release|x64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|x64.Build.0 = Release|x64
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|x86.ActiveCfg = Release|Win32
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524} = {7157CD3F-776D-4E1F-B7FB-2D65691F9452}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D479CABC-5803-43D8-9BBD-8BFBE1B13531}
+	EndGlobalSection
+EndGlobal
