@@ -19,10 +19,12 @@ set Configuration=Debug,Release
 set ActionConfirm=Build
 
 set scriptName=%0
+set driveName=%~d0
 set scriptDirectory=%~dp0
 set currentDirectory=%cd%
 rem cd %scriptDirectory%..
 cd %scriptDirectory%
+%driveName%
 set repositoryRoot=%cd%\
 
 
@@ -53,7 +55,7 @@ for %%p in (%PlatformTarget%) do (
 	echo "!!!!!!!!!!!! platform %%p"
 	for %%c in (%Configuration%) do (
 		echo "!!!!!!!!!!!! !!!!!!!!!!!! compiling for configuration %%c"
-		call msbuild "%repositoryRoot%workspaces\xdr_rpc_vs\xdr_rpc.sln" /t:!ActionConfirm! /p:Configuration=%%c /p:Platform=%%p
+		call msbuild "%repositoryRoot%workspaces\xdr_rpc-all_vs\xdr_rpc-all.sln" /t:!ActionConfirm! /p:Configuration=%%c /p:Platform=%%p
 		if not "!ERRORLEVEL!"=="0" (exit /b !ERRORLEVEL!)
 	)
 )
