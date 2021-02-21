@@ -25,6 +25,9 @@
     <Filter Include="Source Files\for_server">
       <UniqueIdentifier>{c7adf404-429b-487e-baa3-8e0cc59d5469}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\for_rpc_bind">
+      <UniqueIdentifier>{c83c9cf0-ccb2-4966-82e0-bb41d4ba9825}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\core\auth_non.c">
@@ -98,6 +101,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\core\for_server\svc_run.c">
       <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_rpc_bind\svc_udp.c">
+      <Filter>Source Files\for_rpc_bind</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_rpc_bind\pmap_pro.c">
+      <Filter>Source Files\for_rpc_bind</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

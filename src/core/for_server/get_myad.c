@@ -76,26 +76,20 @@ static char sccsid[] = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
  */
 #endif
 
+static int GetHostSinAddr(struct in_addr* a_sin_addr_p);
 
-
+MINI_XDR_EXPORT
 void get_myaddress(addr)
 	struct sockaddr_in *addr;
 {
 #ifdef _WIN32
-struct hostent	*Hostent;
-char my_name[MAX_NAME_LEN];
-
-	gethostname(my_name, MAX_NAME_LEN);
-	Hostent = gethostbyname(my_name);
-
-	if (Hostent == NULL) {
-		perror("Can not get host info");
-		exit (1);
-	}
 
 	addr->sin_family = AF_INET;
 	addr->sin_port = htons(PMAPPORT);
-	memcpy(&addr->sin_addr,Hostent->h_addr,Hostent->h_length);
+	//memcpy(&addr->sin_addr,Hostent->h_addr,Hostent->h_length);
+	if(GetHostSinAddr(&addr->sin_addr)){
+		fprintf(stderr,"Unable to get local ipv4 address. Error code is: %d\n",WSAGetLastError());
+	}
 
 #else	
 	int s;
@@ -131,4 +125,39 @@ char my_name[MAX_NAME_LEN];
 	}
 	(void) close(s);
 #endif
+}
+
+
+static int GetHostSinAddr(struct in_addr* a_sin_addr_p)
+{
+	int nReturn = 1;
+	char my_name[MAX_NAME_LEN];
+	ADDRINFOA* pAddrInfo = NULL;
+	ADDRINFOA* ptr;
+	INT getAddrInfoRet;
+	struct sockaddr_in* ipv4_addr_ptr;
+
+	gethostname(my_name, MAX_NAME_LEN);
+	getAddrInfoRet = getaddrinfo(my_name, NULL, NULL, &pAddrInfo);
+	if (getAddrInfoRet) {
+		goto returnPoint;
+	}
+
+	for (ptr = pAddrInfo; ptr != NULL; ptr = ptr->ai_next) {
+		switch (ptr->ai_family) {
+		case AF_INET:
+			ipv4_addr_ptr = (struct sockaddr_in*)ptr->ai_addr;
+			nReturn = 0;
+			goto returnPoint;
+			break;
+		default:
+			break;
+		}
+	}
+
+	nReturn = 0;
+returnPoint:
+	if (pAddrInfo) { freeaddrinfo(pAddrInfo); }
+
+	return nReturn;
 }
