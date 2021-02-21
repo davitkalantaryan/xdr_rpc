@@ -74,13 +74,9 @@ MINI_XDR_BEGIN_C_DECLS
  * proc is the routine to handle the referenced structure.
  */
 // MINI_XDR_EXPORT  // for time being exporting this function is not necessary
-static
+//static // this is needed in the file pmap_pro.c
 bool_t
-xdr_reference(xdrs, pp, size, proc)
-	register XDR *xdrs;
-	caddr_t *pp;		/* the pointer to work on */
-	u_int size;		/* size of the object pointed to */
-	xdrproc_t proc;		/* xdr routine to handle the object */
+xdr_reference(register XDR* xdrs, caddr_t* pp, u_int size, xdrproc_t proc)
 {
 	register caddr_t loc = *pp;
 	register bool_t stat;
