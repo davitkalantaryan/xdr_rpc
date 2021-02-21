@@ -184,8 +184,9 @@ authunix_create(machname, uid, gid, len, aup_gids)
  * Returns an auth handle with parameters determined by doing lots of
  * syscalls.
  */
-#if 0
-MINI_XDR_EXPORT_FNL
+#if 1
+// MINI_XDR_EXPORT_FNL
+MINI_XDR_EXPORT
 AUTH *
 authunix_create_default(void)
 {
@@ -200,8 +201,10 @@ authunix_create_default(void)
 	machname[MAX_MACHINE_NAME] = 0;
 #ifdef _WIN32
 /* who knows anything better? me!!!*/
-	uid = geteuid();
-	gid = getegid();
+	//uid = geteuid();
+	//gid = getegid();
+	uid = 0;
+	gid = 0;
 	len = 1;
 	gids[0] = 0;
 #else

@@ -183,7 +183,7 @@ MINI_XDR_EXPORT AUTH *authdes_create(void);
  * XDR an opaque authentication struct.
  */
 MINI_XDR_EXPORT bool_t xdr_opaque_auth(XDR_RPC_REGISTER XDR * xdrs, void* app, ...) __THROW;
-MINI_XDR_EXPORT_FNL AUTH *authunix_create_default(void);
+MINI_XDR_EXPORT AUTH *authunix_create_default(void);
 MINI_XDR_EXPORT AUTH *authnone_create(void) __THROW;
 MINI_XDR_EXPORT AUTH * authunix_create(char* machname, uid_t uid, gid_t gid, int len, gid_t * aup_gids);
 

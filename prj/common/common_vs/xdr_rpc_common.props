@@ -11,7 +11,7 @@
   <PropertyGroup>
     <IntDir>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\.objects\$(ProjectName)\</IntDir>
     <SourcePath>$(UDOOCSROOT)\dev\src\clientlib\pktrclntlib;$(UDOOCSROOT)\dev\src\clientlib;$(SourcePath)</SourcePath>
-    <TargetName>$(ProjectName).$(XdrRpcFullVersion)</TargetName>
+    <TargetName>$(ProjectName)$(XdrRpcNameExtra).$(XdrRpcFullVersion)</TargetName>
     <OutDir>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\dll\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -25,7 +25,7 @@
     <Link>
       <AdditionalLibraryDirectories>$(UDOOCSROOT)\dev\arch\$(PROCESSOR_ARCHITECTURE)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DOOCSapi.lib;wlac.lib</AdditionalDependencies>
-      <ImportLibrary>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\lib\$(ProjectName).lib</ImportLibrary>
+      <ImportLibrary>$(ProjectDir)..\..\..\sys\win_$(Platformtarget)\$(Configuration)\lib\$(ProjectName)$(XdrRpcNameExtra).lib</ImportLibrary>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

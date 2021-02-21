@@ -280,6 +280,7 @@
     <ClCompile Include="..\..\..\src\core\for_server\svc.c" />
     <ClCompile Include="..\..\..\src\core\for_server\svc_auth.c" />
     <ClCompile Include="..\..\..\src\core\for_server\svc_autu.c" />
+    <ClCompile Include="..\..\..\src\core\for_server\svc_run.c" />
     <ClCompile Include="..\..\..\src\core\for_server\svc_tcp.c" />
     <ClCompile Include="..\..\..\src\core\mini_xdr_rpc_entry.c" />
     <ClCompile Include="..\..\..\src\core\mini_xdr_rpc_missing_functions.c" />

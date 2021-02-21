@@ -96,6 +96,9 @@
     <ClCompile Include="..\..\..\src\core\for_server\rpc_call.c">
       <Filter>Source Files\for_server</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\core\for_server\svc_run.c">
+      <Filter>Source Files\for_server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\core\mini_xdr_rpc_src_private.h">
