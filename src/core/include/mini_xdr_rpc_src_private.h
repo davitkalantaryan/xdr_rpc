@@ -43,9 +43,10 @@ typedef ssize_t sndrcv_ret_t;
 
 #define XDR_RPC_UNUSED(_var) (void)(_var)
 
-#define XDR_RPC_DEBUG(...)
 
 MINI_XDR_BEGIN_C_DECLS
+
+extern MINI_XDR_DLL_PRIVATE struct rpc_createerr		rpc_createerr;
 
 #define	bzero(__a_s__,__a_size__)			memset((__a_s__),0,(__a_size__))
 #define bcopy(__a_src__,__a_dst__,__a_n__)	memmove((__a_dst__),(__a_src__),(__a_n__))
@@ -70,6 +71,8 @@ MINI_XDR_BEGIN_C_DECLS
 #define MINI_XDR_LIKELY(_cond)		(_cond)
 #define MINI_XDR_UNLIKELY(_cond)	(_cond)
 
+MINI_XDR_DLL_PRIVATE struct opaque_auth _null_auth;
+
 #ifdef _MSC_VER
 // Microsoft versions of safe string functions
 //errno_t strncpy_s(char* strDest,size_t numberOfElements,const char* strSource,size_t count);
@@ -79,14 +82,6 @@ MINI_XDR_BEGIN_C_DECLS
 #define strncat(_strDest,_strSource,_count)	strncat_s((_strDest),(_count),(_strSource),(_count))
 #endif
 
-extern MINI_XDR_DLL_PRIVATE struct rpc_createerr		rpc_createerr;
-extern MINI_XDR_DLL_PRIVATE struct opaque_auth			_null_auth;
-
-#ifdef _WIN32
-#else
-#define WSAGetLastError()		errno
-#define SOCKET_ERROR			-1
-#endif
 
 MINI_XDR_END_C_DECLS
 

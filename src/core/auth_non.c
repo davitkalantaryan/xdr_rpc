@@ -50,11 +50,14 @@ static char sccsid[] = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
  * Copyright (C) 1984, Sun Microsystems, Inc. 
  */
 
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
 #include <malloc.h>
 #include "mini_xdr_rpc_src_private.h"
+
 
 #define MAX_MARSHEL_SIZE 20
 
@@ -121,7 +124,7 @@ authnone_marshal(client, xdrs)
 	register struct authnone_private *ap = authnone_private;
 	
 	XDR_RPC_UNUSED(client);
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	if (ap == 0)
 		return (0);

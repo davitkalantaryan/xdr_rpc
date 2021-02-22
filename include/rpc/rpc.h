@@ -69,6 +69,8 @@ MINI_XDR_BEGIN_C_DECLS
 
 // todo: delete from here
 //MINI_XDR_EXPORT int _rpc_dtablesize(void);
+MINI_XDR_EXPORT void SetXdrRpcLogLevel(int a_nLogLevel);
+MINI_XDR_EXPORT int  GetXdrRpcLogLevel(void);
 
 MINI_XDR_END_C_DECLS
 

@@ -49,21 +49,24 @@ static char sccsid[] = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#ifdef WIN32
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
+#include <rpc/types.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
-#else
-#include <rpc/pmap_prot.h>
-#include <rpc/pmap_clnt.h>
+#include "xdr_rpc_debug.h"
+
+#if !defined(bool_t) && !defined(bool_t_defined)
+#define bool_t	int
+#define bool_t_defined
 #endif
 
-void get_myaddress(struct sockaddr_in * addr); /// Added by DK
-bool_t pmap_unset(u_long program, u_long version); /// Should be deleted
+MINI_XDR_EXPORT
+void get_myaddress(struct sockaddr_in* addr); /// Added by DK
 
 static struct timeval timeout = { 5, 0 };
 static struct timeval tottimeout = { 60, 0 };
 
-void clnt_perror(CLIENT * rpch, char *s);
 
 /*
  * Set a mapping between program,version and port.
@@ -93,15 +96,11 @@ pmap_set(program, version, protocol, port)
 	parms.pm_port = port;
 	if (CLNT_CALL(client, PMAPPROC_SET, xdr_pmap, (caddr_t)&parms, xdr_bool, (caddr_t)&rslt,
 	    tottimeout) != RPC_SUCCESS) {
-		clnt_perror(client, "Cannot register service");
+		XDR_RPC_ERR("Cannot register service, %p",(void*)client);
 		return (FALSE);
 	}
 	CLNT_DESTROY(client);
-#ifdef WIN32
 	(void)closesocket(socket);
-#else
-	(void)close(socket);
-#endif
 	return (rslt);
 }
 
@@ -131,7 +130,7 @@ pmap_unset(program, version)
 	CLNT_CALL(client, PMAPPROC_UNSET, xdr_pmap, (caddr_t)&parms, xdr_bool, (caddr_t)&rslt,
 	    tottimeout);
 	CLNT_DESTROY(client);
-#ifdef WIN32
+#ifdef _WIN32
 	(void)closesocket(socket);
 #else
 	(void)close(socket);
