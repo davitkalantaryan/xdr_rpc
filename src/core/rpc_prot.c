@@ -55,6 +55,8 @@ static char sccsid[] = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
  * routines are also in this program.
  */
 
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include "rpc/types.h"
 #include "rpc/xdr.h"
 #include "rpc/auth.h"
@@ -172,12 +174,12 @@ xdr_replymsg(xdrs, rmsg)
 	register XDR *xdrs;
 	register struct rpc_msg *rmsg;
 {
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	if (xdr_u_long(xdrs, &(rmsg->rm_xid)) && xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) && (rmsg->rm_direction == REPLY) ){
 		bool_t bRet;
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		bRet = (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),(caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL_xdrproc_t));
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		return bRet;
 	}
 	return (FALSE);

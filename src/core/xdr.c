@@ -53,6 +53,8 @@ static char sccsid[] = "@(#)xdr.c 1.35 87/08/12";
  */
 
 #include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
+#include <rpc/wrpc_first_com_include.h>
 #include <stdio.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -296,7 +298,7 @@ xdr_u_short(XDR_RPC_REGISTER XDR * xdrs, void* uspp, ...)
 	u_short *usp = (u_short *)uspp;
 	long l;
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	switch (xdrs->x_op) {
 

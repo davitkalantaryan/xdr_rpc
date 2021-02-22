@@ -5,7 +5,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <time.h>
-#include <rpc/doocs_rpc_unix_like_functions.h>
+#include <rpc/rpc_unix_like_functions.h>
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -97,22 +97,25 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 
 #ifdef _WIN32
 
+#ifdef bindresvport
+#undef bindresvport
+#endif
+
 MINI_XDR_EXPORT
 int bindresvport(int sd, struct sockaddr_in * sin)
 {
-#if 1
-	int i = 1;
-	
-	//setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char*)&i,sizeof(int));
 	(void)sd;
 	(void)sin;
-
 	return 0;
-#else
+}
+
+
+MINI_XDR_EXPORT
+int bindresvport_real(int sd, struct sockaddr_in * sin)
+{
 	int res;
 	static short port;
 	struct sockaddr_in myaddr;
-	//int my_errno;
 	int i=1;
 
 	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char*)&i, sizeof(int));
@@ -143,7 +146,6 @@ int bindresvport(int sd, struct sockaddr_in * sin)
 		errno = WSAGetLastError();
 	}
 	return (res);
-#endif
 }
 
 

@@ -59,6 +59,8 @@ static char sccsid[] = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
  * The other 31 bits encode the byte length of the fragment.
  */
 
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <stdio.h>
@@ -488,21 +490,21 @@ xdrrec_endofrecord(xdrs, sendnow)
 	register RECSTREAM *rstrm = (RECSTREAM *)(xdrs->x_private);
 	register u_long len;  /* fragment length */
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	if (sendnow || rstrm->frag_sent || (rstrm->out_finger + sizeof(u_long) >= rstrm->out_boundry)) {
 		bool_t bRet;
 		rstrm->frag_sent = FALSE;
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		bRet =  (flush_out(rstrm, TRUE));
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		return bRet;
 	}
 	len = POINTERS_DIFF(u_long, rstrm->out_finger,rstrm->frag_header) - sizeof(u_long);
 	*(rstrm->frag_header) = htonl((unsigned long)len | LAST_FRAG);
 	rstrm->frag_header = (u_long *)rstrm->out_finger;
 	rstrm->out_finger += sizeof(u_long);
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	return (TRUE);
 }
 
@@ -519,7 +521,7 @@ flush_out(rstrm, eor)
 	//register u_long len = (u_long)(rstrm->out_finger) - (u_long)(rstrm->frag_header) - sizeof(u_long);
 	register u_long len = POINTERS_DIFF(u_long,rstrm->out_finger,rstrm->frag_header) - sizeof(u_long);
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	*(rstrm->frag_header) = htonl(len | eormask);
 	//len = (u_long)(rstrm->out_finger) - (u_long)(rstrm->out_base);

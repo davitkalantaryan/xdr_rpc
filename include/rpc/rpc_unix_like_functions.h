@@ -41,10 +41,14 @@ struct timeval* gettimeofday(struct timeval* t, struct timezone* tz);
 #endif
 #endif
 
-#ifdef bindresvport_is_not_needed
-#define bindresvport(_sd,_sin)
-#else
 MINI_XDR_EXPORT int bindresvport(int sd, struct sockaddr_in* sin);
+MINI_XDR_EXPORT int bindresvport_real(int sd, struct sockaddr_in* sin);
+
+#ifdef bindresvport_real_is_needed
+#ifdef bindresvport
+#undef bindresvport
+#endif
+#define bindresvport	bindresvport_real
 #endif
 
 MINI_XDR_END_C_DECLS
