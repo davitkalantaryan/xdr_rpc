@@ -35,6 +35,7 @@ struct timezone
 #if defined(gettimeofday_is_needed) || defined(MINI_XDR_COMPILING_SHARED_LIB)
 MINI_XDR_EXPORT_UNIX_LIKE int gettimeofday(struct timeval* tv, struct timezone* tz);
 #endif
+#endif
 
 
 MINI_XDR_EXPORT int bindresvport(int sd, struct sockaddr_in* sin);
