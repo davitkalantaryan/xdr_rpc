@@ -61,7 +61,7 @@ static char sccsid[] = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/auth.h>
 #include <stdio.h>
 #include <rpc/auth_unix.h>
-#include <rpc/rpc_unix_like_functions.h>
+#include <rpc/doocs_rpc_unix_like_functions.h>
 #include "mini_xdr_rpc_src_private.h"
 
 MINI_XDR_BEGIN_C_DECLS

@@ -5,7 +5,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <time.h>
-#include <rpc/rpc_unix_like_functions.h>
+#include <rpc/doocs_rpc_unix_like_functions.h>
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
