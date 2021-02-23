@@ -161,9 +161,6 @@
     <ClInclude Include="..\..\..\include\rpc\svc_soc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\rpc\rpc_unix_like_functions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\core\include\xdr_rpc_debug.h">
       <Filter>Source Files\include</Filter>
     </ClInclude>
@@ -172,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\core\include\mini_xdr_rpc_src_private.h">
       <Filter>Source Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\rpc\doocs_rpc_unix_like_functions.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
