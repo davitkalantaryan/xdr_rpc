@@ -30,6 +30,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rpc_bind", "..\..\prj\utils
 		{7FEB9B36-9BD8-4B82-8731-8D12F1D82524} = {7FEB9B36-9BD8-4B82-8731-8D12F1D82524}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{AFEB2424-9949-4986-9E2A-49409E35C891}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".cicd", ".cicd", "{44B058B0-7D28-432C-9A3E-867E7A089EA4}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\scripts\.cicd\win_test_pull_to_master_build.bat = ..\..\scripts\.cicd\win_test_pull_to_master_build.bat
+		..\..\scripts\.cicd\win_test_pull_to_master_test.bat = ..\..\scripts\.cicd\win_test_pull_to_master_test.bat
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FE90AB11-FE6C-4742-8785-B766946387EA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "googletest_getter", "..\..\prj\tests\googletest_mult\googletest_getter.vcxproj", "{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -90,6 +102,18 @@ Global
 		{44C54DCB-1F12-4609-AFDD-1EA46F29861E}.Release|x64.Build.0 = Release|x64
 		{44C54DCB-1F12-4609-AFDD-1EA46F29861E}.Release|x86.ActiveCfg = Release|Win32
 		{44C54DCB-1F12-4609-AFDD-1EA46F29861E}.Release|x86.Build.0 = Release|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|ARM.ActiveCfg = Debug|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x64.ActiveCfg = Debug|x64
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x64.Build.0 = Debug|x64
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x86.ActiveCfg = Debug|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x86.Build.0 = Debug|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|ARM.ActiveCfg = Release|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|ARM64.ActiveCfg = Release|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x64.ActiveCfg = Release|x64
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x64.Build.0 = Release|x64
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x86.ActiveCfg = Release|Win32
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -99,6 +123,10 @@ Global
 		{1376EF86-8AA8-4F1F-BE76-EDAFF166EFFE} = {7157CD3F-776D-4E1F-B7FB-2D65691F9452}
 		{21261C4E-0929-45AC-A116-41219799D916} = {7157CD3F-776D-4E1F-B7FB-2D65691F9452}
 		{44C54DCB-1F12-4609-AFDD-1EA46F29861E} = {21261C4E-0929-45AC-A116-41219799D916}
+		{AFEB2424-9949-4986-9E2A-49409E35C891} = {C29B5904-1251-4D15-AEEB-C1EC0D400566}
+		{44B058B0-7D28-432C-9A3E-867E7A089EA4} = {AFEB2424-9949-4986-9E2A-49409E35C891}
+		{FE90AB11-FE6C-4742-8785-B766946387EA} = {7157CD3F-776D-4E1F-B7FB-2D65691F9452}
+		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA} = {FE90AB11-FE6C-4742-8785-B766946387EA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D479CABC-5803-43D8-9BBD-8BFBE1B13531}

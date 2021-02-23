@@ -105,21 +105,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 #undef bindresvport
 #endif
 
-#if defined(bindresvport_real_is_needed) && (bindresvport_real_is_needed)
+#if (defined(bindresvport_real_is_needed) && (bindresvport_real_is_needed)) || defined(__INTELLISENSE__)
 #pragma message( "++++++++++++++++++++ fl:" __FILE__ ",ln:" STRING(__LINE__) ",tm: " __TIMESTAMP__ " => bindresvport_real will be used" )
-#else
-#pragma message( "-------------------- fl:" __FILE__ ",ln:" STRING(__LINE__) ",tm: " __TIMESTAMP__ " => bindresvport_real will not be used" )
-#endif
-
-MINI_XDR_EXPORT
-int bindresvport(int sd, struct sockaddr_in * sin)
-{
-	(void)sd;
-	(void)sin;
-	return 0;
-}
-
-
 MINI_XDR_EXPORT
 int bindresvport_real(int sd, struct sockaddr_in * sin)
 {
@@ -156,6 +143,17 @@ int bindresvport_real(int sd, struct sockaddr_in * sin)
 		errno = WSAGetLastError();
 	}
 	return (res);
+}
+#else
+#pragma message( "-------------------- fl:" __FILE__ ",ln:" STRING(__LINE__) ",tm: " __TIMESTAMP__ " => bindresvport_real will not be used" )
+#endif
+
+MINI_XDR_EXPORT
+int bindresvport(int sd, struct sockaddr_in * sin)
+{
+	(void)sd;
+	(void)sin;
+	return 0;
 }
 
 

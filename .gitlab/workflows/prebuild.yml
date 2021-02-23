@@ -1,0 +1,24 @@
+# 
+# YAML file for gitlab CI/CI
+# created on:   2021 Jan 28
+# 
+
+
+stages:
+    - prebuild
+
+# In this stage we prepare host for developer
+# in the case if some 3rd party libraries are needed
+# and they should be compiled, then prebuild should be 
+# prepared and uploaded to some proper place
+# for time being we use push event to `prebuild` branch
+prepare developer host:
+    stage: prebuild
+    only:
+        - prebuild
+    tags:
+        - win-ers02
+    script:
+        - git submodule sync --recursive
+        - git submodule update --init --recursive
+        - echo "Will be implemented"
