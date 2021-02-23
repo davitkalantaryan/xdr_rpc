@@ -76,7 +76,7 @@ enum xprt_stat {
  */
 typedef struct SVCXPRT SVCXPRT;
 struct SVCXPRT {
-  int xp_sock;
+  rpcsocket_t xp_sock;
   u_short xp_port;		/* associated port number */
   const struct xp_ops {
     bool_t	(*xp_recv) __P ((SVCXPRT *__xprt, struct rpc_msg *__msg));

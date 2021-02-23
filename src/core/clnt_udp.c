@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
  */
 
 #include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <stdio.h>
 #include <errno.h>
 #include <rpc/pmap_clnt.h>
@@ -142,26 +143,14 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (!cl) {
-		(void)fprintf(stderr, "clntudp_create: out of memory\n");
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = ENOMEM;
-#else
-		rpc_createerr.cf_error.re_errno = errno;
-#endif
+		XDR_RPC_ERR("out of memory");
 		goto fooy;
 	}
 	sendsz = ((sendsz + 3) / 4) * 4;
 	recvsz = ((recvsz + 3) / 4) * 4;
 	cu = (struct cu_data *)mem_alloc(sizeof(*cu) + sendsz + recvsz);
 	if (!cu) {
-		(void)fprintf(stderr, "clntudp_create: out of memory\n");
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = ENOMEM;
-#else
-		rpc_createerr.cf_error.re_errno = errno;
-#endif
+		XDR_RPC_ERR("out of memory\n");
 		goto fooy;
 	}
 	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
@@ -175,7 +164,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 		}
 		raddr->sin_port = htons(port);
 	}
-	XDR_RPC_DEBUG("file:%s,line:%d,client->cl_ops->cl_call:%p\n",__FILE__,__LINE__,(void*)&clntudp_call);
+	XDR_RPC_DEBUG("client->cl_ops->cl_call:%p\n",(void*)&clntudp_call);
 	cl->cl_ops = &udp_ops;
 	cl->cl_private = (caddr_t)cu;
 	cu->cu_raddr = *raddr;
@@ -200,38 +189,28 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 		int dontblock = 1;
 
 		*sockp = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-#ifdef _WIN32
 		if (*sockp == INVALID_SOCKET) {
-			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-			rpc_createerr.cf_error.re_errno = WSAGetLastError();
-#else
-		if (*sockp < 0) {
-			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-			rpc_createerr.cf_error.re_errno = errno;
-#endif
 			goto fooy;
 		}
 		/* attempt to bind to prov port */
-        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+        XDR_RPC_DEBUG("  ");
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
-        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		/* the sockets rpc controls are non-blocking */
 #ifdef _WIN32
 		(void)ioctlsocket(*sockp, FIONBIO, (u_long *) &dontblock);
 #else
-        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+        XDR_RPC_DEBUG("  ");
 		
         
         //(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
         if ((status = fcntl(*sockp, F_GETFL, 0)) != -1){
-           XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
-           status |= O_NONBLOCK;
-           fcntl(*sockp, F_SETFL, status);
+			XDR_RPC_DEBUG("  ");
+			status |= O_NONBLOCK;
+			fcntl(*sockp, F_SETFL, status);
         }
-        
-        
-        
-        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+         
+		XDR_RPC_DEBUG("  ");
 #endif
 		cu->cu_closeit = TRUE;
 	} else {
@@ -294,7 +273,7 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	int nrefreshes = 2;	/* number of times to refresh cred */
 	struct timeval timeout;
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	if (cu->cu_total.tv_usec == -1) {
 		timeout = utimeout;     /* use supplied timeout */
@@ -308,7 +287,7 @@ call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, cu->cu_xdrpos);
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	/*
 	 * the transaction is the first thing in the out buffer
 	 */
@@ -317,23 +296,17 @@ call_again:
 	if ((! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
 		(! (*xargs)(xdrs, argsp))){
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);		
+		XDR_RPC_DEBUG("  ");
 		return (cu->cu_error.re_status = RPC_CANTENCODEARGS);
 	}
 
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);	
+	XDR_RPC_DEBUG("  ");
 	outlen = (int)XDR_GETPOS(xdrs);
 
 send_again:
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
-	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
-	    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen)
-	    != outlen) {
-#ifdef _WIN32
-		cu->cu_error.re_errno = WSAGetLastError();
-#else
-		cu->cu_error.re_errno = errno;
-#endif
+	XDR_RPC_DEBUG("  ");
+	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,(struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen)!= outlen) {
+		cu->cu_error.re_errno = COMMON_SOCK_ERRNO;
 		return (cu->cu_error.re_status = RPC_CANTSEND);
 	}
 
@@ -359,9 +332,7 @@ send_again:
 #endif /* def FD_SETSIZE */
 	for (;;) {
 		readfds = mask;
-#if defined( _WIN32 )
-		switch (select(0 /* unused in winsock */, &readfds, NULL,
-#elif defined(EMSCRIPTEN)
+#if defined(EMSCRIPTEN)
 		switch (select(cu->cu_sock+1, &readfds, NULL,
 #else
 		switch (select(_rpc_dtablesize(), &readfds, NULL,  
@@ -386,15 +357,9 @@ send_again:
 		 * updated.
 		 */
 		case -1:
-#ifdef _WIN32
-			if (WSAGetLastError() == WSAEINTR)
+			if (COMMON_SOCK_ERRNO == WSAEINTR)
 				continue;
-			cu->cu_error.re_errno = WSAGetLastError();
-#else
-			if (errno == EINTR)
-				continue;	
-			cu->cu_error.re_errno = errno;
-#endif
+			cu->cu_error.re_errno = COMMON_SOCK_ERRNO;
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
 		do {
@@ -402,19 +367,12 @@ send_again:
 			inlen = recvfrom(cu->cu_sock, cu->cu_inbuf,
 				(int) cu->cu_recvsz, 0,
 				(struct sockaddr *)&from, &fromlen);
-#ifdef _WIN32
-		} while (inlen < 0 && WSAGetLastError() == EINTR);
+		} while ((inlen < 0) && (COMMON_SOCK_ERRNO == WSAEINTR));
 		if (inlen < 0) {
-			if (WSAGetLastError() == WSAEWOULDBLOCK)
+			if (COMMON_SOCK_ERRNO == WSAEWOULDBLOCK) {
 				continue;
-			cu->cu_error.re_errno = WSAGetLastError();
-#else
-		} while (inlen < 0 && errno == EINTR);
-		if (inlen < 0) {
-			if (errno == EWOULDBLOCK)
-				continue;	
-			cu->cu_error.re_errno = errno;
-#endif
+			}
+			cu->cu_error.re_errno = COMMON_SOCK_ERRNO;
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
 		if (inlen < sizeof(u_long))
@@ -528,11 +486,7 @@ clntudp_destroy(cl)
 	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	if (cu->cu_closeit) {
-#ifdef _WIN32
 		(void)closesocket(cu->cu_sock);
-#else
-		(void)close(cu->cu_sock);
-#endif
 	}
 	XDR_DESTROY(&(cu->cu_outxdrs));
 	mem_free(cu, (sizeof(*cu) + cu->cu_sendsz + cu->cu_recvsz));

@@ -56,8 +56,15 @@ static char sccsid[] = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 #include <netdb.h>
 #include <sys/socket.h>
 #endif
+#include "xdr_rpc_debug.h"
+
 
 MINI_XDR_BEGIN_C_DECLS
+
+MINI_XDR_DLL_PRIVATE 
+int GetHostSinAddrAndReturnProto(struct in_addr* sin_addr_p, const char* hostName, const char* protoName, const char* portAsStrOrServiceName);
+MINI_XDR_DLL_PRIVATE 
+int GetHostSinAddrAndReturnProto2(struct in_addr* sin_addr_p, const char* hostName, const char* protoName, int portNumber);
 
 /*
  * Generic client creation: takes (hostname, program-number, protocol) and
@@ -72,86 +79,26 @@ clnt_create(hostname, prog, vers, proto)
 	unsigned vers;
 	char *proto;
 {
-	//struct hostent *h;
-	//struct protoent *p;
 	struct sockaddr_in sin;
 	int sock;
 	struct timeval tv;
 	CLIENT *client;
-	struct addrinfo hints, *res=NULL;
-	int nRet;
-	int    p_proto = IPPROTO_TCP;
+	int nProto;
 
-#ifdef _MSC_VER
-#pragma warning (push)
-#pragma warning (disable:4996)
-#endif
-	
-	//return NULL;
-	
-	//h = gethostbyname(hostname);
-	
-	memset(&hints, 0, sizeof (hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags |= AI_CANONNAME;
-	nRet=getaddrinfo(hostname, NULL, &hints, &res);
-	
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-    
-    XDR_RPC_DEBUG("file:%s,line:%d, proto=%s\n",__FILE__,__LINE__,proto?proto:"null");
-	
-	if(nRet || (res->ai_family!=AF_INET)) {  // todo: for the future make loop to find internet interface
-		rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
-		return (NULL);
-	}
-    
-#if 0
-	if (!h) {
-		rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
-		return (NULL);
-	}
-	if (h->h_addrtype != AF_INET) {
-		/*
-		 * Only support INET for now
-		 */
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = WSAEAFNOSUPPORT; 
-#else
-		rpc_createerr.cf_error.re_errno = EAFNOSUPPORT; 
-#endif
-		return (NULL);
-	}
-#endif
-	
-	sin = *((struct sockaddr_in *)res->ai_addr);
-	freeaddrinfo(res);
-	
 	sin.sin_family = AF_INET;
 	sin.sin_port = 0;
+	bzero(sin.sin_zero, sizeof(sin.sin_zero));
 	
-	//bzero(sin.sin_zero, sizeof(sin.sin_zero));
 	//bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);
-	//sin.sin_addr = res->ai_addr->sa_data;
+	//p = getprotobyname(proto);
+	nProto = GetHostSinAddrAndReturnProto(&sin.sin_addr,hostname,proto,NULL);
 	
-#if 0
-	p = getprotobyname(proto);
-	if (p == NULL) {
-		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = WSAEPFNOSUPPORT;
-#else
-		rpc_createerr.cf_error.re_errno = EPFNOSUPPORT;
-#endif 
+	
+	if (nProto<0) {
 		return (NULL);
 	}
-    XDR_RPC_DEBUG("file:%s,line:%d, p->p_proto=%d\n",__FILE__,__LINE__,(int)p->p_proto);
-#endif
 	sock = RPC_ANYSOCK;
-	switch (p_proto) {
+	switch (nProto) {
 	case IPPROTO_UDP:
 		tv.tv_sec = 5;
 		tv.tv_usec = 0;
@@ -162,9 +109,8 @@ clnt_create(hostname, prog, vers, proto)
 		tv.tv_sec = 25;
 		clnt_control(client, CLSET_TIMEOUT, (caddr_t)&tv);
 		break;
-	case IPPROTO_TCP:
+	default:
 		client = clnttcp_create(&sin, prog, vers, &sock, 0, 0);
-		XDR_RPC_DEBUG("file:%s,line:%d, proto=%s, client=%p\n",__FILE__,__LINE__,proto?proto:"null",(void*)client);
 		if (client == NULL) {
 			return (NULL);
 		}
@@ -172,16 +118,77 @@ clnt_create(hostname, prog, vers, proto)
 		tv.tv_usec = 0;
 		clnt_control(client, CLSET_TIMEOUT, (caddr_t)&tv);
 		break;
-	default:
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = WSAEPFNOSUPPORT; 
-#else
-		rpc_createerr.cf_error.re_errno = EPFNOSUPPORT; 
-#endif
-		return (NULL);
 	}
 	return (client);
+}
+
+
+MINI_XDR_DLL_PRIVATE int GetHostSinAddrAndReturnProto(struct in_addr* a_sin_addr_p,const char* a_hostName, const char* a_protoName, const char* a_portAsStrOrServiceName)
+{
+#ifdef _WIN32
+
+	int nReturn = -1;
+	struct protoent* prot = NULL;
+	struct addrinfo* pAddrInfo = NULL;
+	struct addrinfo* ptr;
+	struct addrinfo hints;
+	INT getAddrInfoRet;
+	struct sockaddr_in* ipv4_addr_ptr;
+
+	if(a_protoName){
+		prot = getprotobyname(a_protoName);
+	}
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = 0;  // 0 means unspecified
+	hints.ai_protocol = prot? prot->p_proto:0;
+
+	getAddrInfoRet = getaddrinfo(a_hostName,a_portAsStrOrServiceName,&hints, &pAddrInfo);
+	if (getAddrInfoRet) {
+		goto returnPoint;
+	}
+
+	for (ptr = pAddrInfo; ptr != NULL; ptr = ptr->ai_next) {
+		switch (ptr->ai_family) {
+		case AF_INET:
+			ipv4_addr_ptr = (struct sockaddr_in*)ptr->ai_addr;
+			memcpy(a_sin_addr_p, &ipv4_addr_ptr->sin_addr,sizeof(struct in_addr));
+			nReturn = hints.ai_protocol;
+			goto returnPoint;
+			break;
+		default:
+			break;
+		}
+	}
+
+	nReturn = hints.ai_protocol;
+returnPoint:
+	if (pAddrInfo) { freeaddrinfo(pAddrInfo); }
+	return nReturn;
+
+#else   // #ifdef _WIN32
+
+#error implement unix part
+
+	// todo: implement case of UNIX
+	(void)a_hostName;
+	(void)a_sin_addr_p;
+	return 0;
+
+#endif  // #ifdef _WIN32
+}
+
+
+MINI_XDR_DLL_PRIVATE int GetHostSinAddrAndReturnProto2(struct in_addr* a_sin_addr_p,const char* a_hostName, const char* a_protoName,int a_portNumber)
+{
+	if(a_portNumber>0){
+		char vcPortNumberStr[64];
+		snprintf(vcPortNumberStr, 63, "%d", a_portNumber);
+		return GetHostSinAddrAndReturnProto(a_sin_addr_p,a_hostName,a_protoName, vcPortNumberStr);
+	}
+
+	return GetHostSinAddrAndReturnProto(a_sin_addr_p, a_hostName, a_protoName,NULL);
 }
 
 MINI_XDR_END_C_DECLS

@@ -17,34 +17,35 @@
 
 MINI_XDR_BEGIN_C_DECLS
 
-
 /* Structure crudely representing a timezone.
 This is obsolete and should never be used.  */
-#if !defined(timezone_not_needed) && defined(_WIN32)
+#if !defined(timezone_defined) && !defined(timezone_not_needed)
+#define timezone_defined
 #ifdef timezone
 #undef timezone
 #endif
 struct timezone
 {
-	int tz_minuteswest;		/* Minutes west of GMT.  */
-	int tz_dsttime;		/* Nonzero if DST is ever in effect.  */
+    int tz_minuteswest;		/* Minutes west of GMT.  */
+    int tz_dsttime;		/* Nonzero if DST is ever in effect.  */
 };
 #endif  // #ifndef timezone_not_needed
 
 #ifdef _WIN32
 #if defined(gettimeofday_is_needed) || defined(MINI_XDR_COMPILING_SHARED_LIB)
 MINI_XDR_EXPORT_UNIX_LIKE int gettimeofday(struct timeval* tv, struct timezone* tz);
-#else
-// in the case of doocs this is done in the tine
-// and unfortunately done with incorrect arguments
-struct timeval* gettimeofday(struct timeval* t, struct timezone* tz);
 #endif
 #endif
 
-#ifdef bindresvport_is_not_needed
-#define bindresvport(_sd,_sin)
-#else
+
 MINI_XDR_EXPORT int bindresvport(int sd, struct sockaddr_in* sin);
+
+#if defined(bindresvport_real_is_needed) && (bindresvport_real_is_needed)
+#ifdef bindresvport
+#undef bindresvport
+#endif
+MINI_XDR_EXPORT int bindresvport_real(int sd, struct sockaddr_in* sin);
+#define bindresvport	bindresvport_real
 #endif
 
 MINI_XDR_END_C_DECLS

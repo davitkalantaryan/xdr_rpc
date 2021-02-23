@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
  */
 
 #include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/clnt.h>
@@ -65,14 +66,14 @@ bool_t
 xdr_pmap(XDR *xdrs, void* vpregs, ...)	
 {
 	struct pmap *regs = (struct pmap *)vpregs;
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG(" ");
 	if (xdr_u_long(xdrs, &regs->pm_prog) && 
 		xdr_u_long(xdrs, &regs->pm_vers) && 
 	    xdr_u_long(xdrs, &regs->pm_prot)){
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG(" ");
 		return (xdr_u_long(xdrs, &regs->pm_port));
 	}
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG(" ");
 	return (FALSE);
 }
 
@@ -91,37 +92,35 @@ pmap_getport_udp(address, program, version, protocol)
 {
 	u_short port = 0;
 	int socket = -1;
+	struct rpc_err aError;
 	register CLIENT *client;
 	struct pmap parms;
     
-    XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+    XDR_RPC_DEBUG("  ");
 
 	address->sin_port = htons(PMAPPORT);
-    XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	client = clntudp_bufcreate(address, PMAPPROG,PMAPVERS, timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-    XDR_RPC_DEBUG("file:%s,line:%d,client=%p\n",__FILE__,__LINE__,(void*)client);
+    XDR_RPC_DEBUG("client=%p",(void*)client);
 	if (client != (CLIENT *)NULL) {
-        XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		parms.pm_prog = program;
 		parms.pm_vers = version;
 		parms.pm_prot = protocol;
 		parms.pm_port = 0;  /* not needed or used */
-		XDR_RPC_DEBUG("file:%s,line:%d,client->cl_ops->cl_call:%p,&xdr_pmap=%p\n",__FILE__,__LINE__,(void*)client->cl_ops->cl_call,(void*)&xdr_pmap);
+		XDR_RPC_DEBUG("client->cl_ops->cl_call:%p,&xdr_pmap=%p\n",(void*)client->cl_ops->cl_call,(void*)&xdr_pmap);
 		if (CLNT_CALL(client, PMAPPROC_GETPORT, xdr_pmap, (caddr_t)&parms,xdr_u_short, (caddr_t)&port, tottimeout) != RPC_SUCCESS){
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
-			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
-			clnt_geterr(client, &rpc_createerr.cf_error);
+			clnt_geterr(client, &aError);
+			XDR_RPC_ERR("rpc error: %d", aError.re_errno);
 		} else if (port == 0) {
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
-			rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
+			XDR_RPC_DEBUG("  ");
 		}
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		CLNT_DESTROY(client);
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 	}
 	(void)closesocket(socket);
 	address->sin_port = 0;
-    XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	return (port);
 }
 	
@@ -138,37 +137,34 @@ pmap_getport(struct sockaddr_in * address, u_long program, u_long version, u_int
 {
 	u_short port = 0;
 	int socket = -1;
+	struct rpc_err aError;
 	register CLIENT *client;
 	struct pmap parms;
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	address->sin_port = htons(PMAPPORT);
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 	client = clnttcp_create(address, PMAPPROG,PMAPVERS, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	XDR_RPC_DEBUG("file:%s,line:%d,client=%p\n",__FILE__,__LINE__,(void*)client);
+	XDR_RPC_DEBUG("client=%p",(void*)client);
 	if (client != (CLIENT *)NULL) {
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		parms.pm_prog = program;
 		parms.pm_vers = version;
 		parms.pm_prot = protocol;
 		parms.pm_port = 0;  /* not needed or used */
-		XDR_RPC_DEBUG("file:%s,line:%d,client->cl_ops->cl_call:%p,&xdr_pmap=%p\n",__FILE__,__LINE__,(void*)client->cl_ops->cl_call,(void*)&xdr_pmap);
 		if (CLNT_CALL(client, PMAPPROC_GETPORT, &xdr_pmap, (caddr_t)&parms,&xdr_u_short, (caddr_t)&port, tottimeout) != RPC_SUCCESS){
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
-			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
-			clnt_geterr(client, &rpc_createerr.cf_error);
+			XDR_RPC_DEBUG("  ");
+			clnt_geterr(client, &aError);
+			XDR_RPC_ERR("rpc failure: errorCode: %d", aError.re_errno);
 		} else if (port == 0) {
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
-			rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
+			XDR_RPC_DEBUG("  ");
 		}
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
 		CLNT_DESTROY(client);
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 	}
 	(void)closesocket(socket);
 	address->sin_port = 0;
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	return (port);
 }
 

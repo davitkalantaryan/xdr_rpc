@@ -1,0 +1,78 @@
+#
+# file:			check-merge-to-master.yml
+# created on:	2020 Sep 26
+#
+# usefull urls:
+#				1. https://docs.github.com/en/actions
+#				2. https://github.com/actions/starter-workflows
+#				3. https://github.com/actions/download-artifact
+#
+
+name: check-merge-to-master
+on:
+    pull_request:
+        branches: [ master ]
+
+
+
+jobs:
+    ## matrix for debian linuxes (for now ubuntu-18.04 and ubuntu-20.04)
+    #debian-linuxes:
+    #    runs-on: ${{ matrix.os }}
+    #    strategy:
+    #      matrix:
+    #        #os: [ubuntu-18.04, ubuntu-20.04, LinuxMint-19.3]
+    #        #os: [ubuntu-18.04, ubuntu-20.04]
+    #        # for time being let's use only one platform on matrix, because running is not free
+    #        os: [ubuntu-18.04]
+    #        include:
+    #          # for all linuxes we should specify lC (lsbCode)
+    #          # lC=$lsbCode=`lsb_release -c | cut -f 2` # for ubuntu18
+    #          - os: ubuntu-18.04
+    #            lC: bionic
+    #          #- os: ubuntu-20.04
+    #          #  lC: focal
+    #          #- os: LinuxMint-19.3
+    #          #  lC: trica
+    #    steps:
+    #        - uses: actions/checkout@v2
+    #
+    #        #- name: Install SSH key
+    #        #  uses: shimataro/ssh-key-action@v2
+    #        #  with:
+    #        #   key: ${{ secrets.SSH_KEY }}
+    #        #   #known_hosts: ${{ secrets.KNOWN_HOSTS }}
+    #
+    #        - name: Building
+    #          run: echo "will be implemented"
+
+
+    # This is for windows
+    windows:
+        runs-on: windows-latest
+        steps:
+
+            - uses: actions/checkout@v2
+              with:
+                  submodules: recursive
+
+            - name: Setup MSBuild.exe
+              uses: microsoft/setup-msbuild@v1.0.2
+
+            - name: Setup developer command prompt
+              uses: ilammy/msvc-dev-cmd@v1
+
+            - name: Compiling library
+              run: cmd /C .\scripts\.cicd\win_test_pull_to_master_build.bat
+              #working-directory: core
+
+            - name: Testing library
+              run: cmd /C .\scripts\.cicd\win_test_pull_to_master_test.bat
+
+    #mac:
+    #    #needs: prepare-ubuntu18-host
+    #    runs-on: macos-latest
+    #    steps:
+    #        #- uses: actions/checkout@v2
+    #        - run: >
+    #            echo "Macos tests to be done"

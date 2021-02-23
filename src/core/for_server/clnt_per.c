@@ -48,6 +48,9 @@ static char sccsid[] = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  *
  */
+
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -61,19 +64,78 @@ static char sccsid[] = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 
 MINI_XDR_BEGIN_C_DECLS
 
+MINI_XDR_EXPORT
+char*
+clnt_sperrno(enum clnt_stat stat);
+
+
+struct SMemoryListItem {
+	struct SMemoryListItem*	next;
+}static *s_pMemListFirst,* s_pMemListLast;
 
 static const char *auth_errmsg(enum auth_stat stat);
 
-//static char**					s_cpccpSys_errlist;
-//static int						s_nSys_nerr;
-
-static const char* s_cpccpSys_errlist[1024] = {[0 ... 1023]="unknown"};
-static const int						s_nSys_nerr = 1024;
+static HANDLE					s_mutexForList;
+static DWORD					s_tlsIndexForBuff;
+static char**					s_cpccpSys_errlist;
+static int						s_nSys_nerr;
 
 
 //static char *buf = NULL;
 
+static void clnt_per_cleanup(void)
+{
+	int i = 0;
+	struct SMemoryListItem *pBufItem, * pBufItemNext;
+	//WaitForSingleObject(s_mutexForList,INFINITE); // better without mutex
+	pBufItem = s_pMemListFirst;
+	while(pBufItem){
+		pBufItemNext = pBufItem->next;
+		//free(pBufItemNext->buff); // not necessary, becuse we did only one allocation
+		free(pBufItem);
+		pBufItem = pBufItemNext;
+	}
+	s_mutexForList = NULL;
+	//ReleaseMutex(s_mutexForList); // better without mutex
 
+	TlsFree(s_tlsIndexForBuff);
+	s_tlsIndexForBuff = 0;
+	
+	CloseHandle(s_mutexForList);
+	s_mutexForList = (HANDLE)0;
+
+	for (; i < s_nSys_nerr; ++i) {
+		free(s_cpccpSys_errlist[i]);
+	}
+	free(s_cpccpSys_errlist);
+	s_cpccpSys_errlist = NULL; 
+	s_nSys_nerr = 0;
+}
+
+// this file is only exception
+#pragma warning (disable:4996)
+
+
+WLAC_INITIALIZER(clnt_per_initialize)
+{
+	char** ppcNames;
+
+	s_nSys_nerr = sys_nerr;
+	ppcNames = sys_errlist;
+
+	if(s_nSys_nerr >0){
+		int i = 0;
+		s_cpccpSys_errlist = (char**)malloc(sizeof(char*)*s_nSys_nerr);
+		for(;i< s_nSys_nerr;++i){
+			s_cpccpSys_errlist[i] = _strdup(ppcNames[i]);
+		}
+	}
+
+	s_mutexForList = CreateMutex(NULL, FALSE, NULL);
+	s_tlsIndexForBuff = TlsAlloc();
+	s_pMemListLast = s_pMemListFirst = NULL;
+	atexit(clnt_per_cleanup);
+}
 
 #undef sys_nerr
 #define sys_nerr		s_nSys_nerr
@@ -84,13 +146,27 @@ static const int						s_nSys_nerr = 1024;
 static char *
 _buf2(void)
 {
-	static char* spcBufferToReturn = NULL;
-	
-	if(!spcBufferToReturn) {
-		spcBufferToReturn = (char*)malloc(PER_THREAD_BUFFER_SIZE+1);
+	char* pcBuff = (char*)TlsGetValue(s_tlsIndexForBuff);
+
+	if (MINI_XDR_UNLIKELY(!pcBuff)){
+		struct SMemoryListItem* pItem = (struct SMemoryListItem*)malloc(sizeof(struct SMemoryListItem)+ PER_THREAD_BUFFER_SIZE+1);
+		if(MINI_XDR_LIKELY(pItem)){
+			pItem->next = NULL;
+			pcBuff = ((char*)pItem)+sizeof(struct SMemoryListItem);
+			WaitForSingleObject(s_mutexForList, INFINITE);
+			if(s_pMemListLast){
+				s_pMemListLast->next = pItem;
+			}
+			else{
+				s_pMemListFirst=pItem;
+			}
+			s_pMemListLast = pItem;
+			ReleaseMutex(s_mutexForList);
+			TlsSetValue(s_tlsIndexForBuff,pcBuff);
+		}
+
 	}
-	
-	return spcBufferToReturn;	
+	return (pcBuff);
 }
 
 
@@ -104,7 +180,6 @@ clnt_sperror(rpch, s)
 	char *s;
 {
 	struct rpc_err e;
-	void clnt_perrno();
 	const char *err;
 	char *str = _buf2();
 	char *strstart = str;
@@ -210,7 +285,7 @@ clnt_perror(rpch, s)
 	CLIENT *rpch;
 	char *s;
 {
-	(void) fprintf(stderr,"%s",clnt_sperror(rpch,s));
+		XDR_RPC_ERR("%s",clnt_sperror(rpch,s));
 }
 
 
@@ -264,8 +339,7 @@ static struct rpc_errtab  rpc_errlist[] = {
  */
 MINI_XDR_EXPORT
 char *
-clnt_sperrno(stat)
-	enum clnt_stat stat;
+clnt_sperrno(enum clnt_stat stat)
 {
 	int i;
 
@@ -283,7 +357,7 @@ void
 clnt_perrno(num)
 	enum clnt_stat num;
 {
-	(void) fprintf(stderr,"%s",clnt_sperrno(num));
+	XDR_RPC_ERR("%s",clnt_sperrno(num));
 }
 
 
@@ -295,6 +369,7 @@ clnt_spcreateerror(s)
 	size_t unBufferSize = PER_THREAD_BUFFER_SIZE;
 	size_t unHandled;
 	char *str = _buf2();
+	char* strstart = str;
 
 	if (!str)return(0);
 
@@ -325,9 +400,6 @@ clnt_spcreateerror(s)
 			(void)snprintf(str, unBufferSize,"Error %d", rpc_createerr.cf_error.re_errno);
 		}
 		break;
-	default:
-			fprintf(stderr,"%s cas of default:\n",__FUNCTION__);
-		break;
 	}
 	(void) strncat(str,"\n", unBufferSize);
 	return (str);
@@ -339,7 +411,7 @@ void
 clnt_pcreateerror(s)
 	char *s;
 {
-	(void) fprintf(stderr,"%s",clnt_spcreateerror(s));
+	XDR_RPC_ERR("%s",clnt_spcreateerror(s));
 }
 
 

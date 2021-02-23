@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
  */
 
 #include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <stdio.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -97,7 +98,7 @@ xdr_array(XDR_RPC_REGISTER XDR * xdrs, void* addrpp, ...)
 	elproc = va_arg(ap,xdrproc_t);
 	va_end(ap);
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	/* like strings, arrays are really counted arrays */
 	if (! xdr_u_int(xdrs, sizep)) {

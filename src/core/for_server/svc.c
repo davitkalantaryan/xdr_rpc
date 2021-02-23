@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include <rpc/wrpc_first_com_include.h>
 #ifdef _WIN32
 #include "rpc/pmap_clnt.h"
 #include <stdio.h>
@@ -59,11 +60,9 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 #include <sys/errno.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
-
-extern int errno;
+#include <errno.h>
 #endif
-
-
+#include "xdr_rpc_debug.h"
 #include "rpc/svc.h"
 #include "rpc/svc_auth.h"
 
@@ -71,7 +70,7 @@ extern int errno;
 #ifdef FD_SETSIZE
 static SVCXPRT **xports;
 #ifdef _WIN32
-static int sizeof_xports = FD_SETSIZE;
+static rpcsocket_t sizeof_xports = FD_SETSIZE;
 #endif
 #else
 #define NOFILE 32
@@ -106,7 +105,7 @@ void
 xprt_register(xprt)
 	SVCXPRT *xprt;
 {
-	register int sock = xprt->xp_sock;
+	register rpcsocket_t sock = xprt->xp_sock;
 
 #ifdef FD_SETSIZE
 	if (xports == NULL) {
@@ -129,7 +128,7 @@ xprt_register(xprt)
 		xports[sock] = xprt;
 		FD_SET(sock, &svc_fdset);
 	} else {		
-		fprintf(stderr, "too many connections (%d), compilation constant FD_SETSIZE was only %d", sock, FD_SETSIZE);
+		XDR_RPC_ERR("too many connections (%d), compilation constant FD_SETSIZE was only %d", (int)sock, FD_SETSIZE);
 	}
 #else
 	if (sock < _rpc_dtablesize()) {
@@ -153,7 +152,7 @@ void
 xprt_unregister(xprt) 
 	SVCXPRT *xprt;
 { 
-	register int sock = xprt->xp_sock;
+	register rpcsocket_t sock = xprt->xp_sock;
 
 #ifdef FD_SETSIZE
 #ifdef _WIN32

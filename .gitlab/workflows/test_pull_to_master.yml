@@ -1,0 +1,64 @@
+# 
+# file:     test_pull_to_master.yml
+# YAML file for gitlab CI/CI
+# created on:   2021 Jan 28
+# 
+
+# We have 3 different cases
+stages:
+    - test-pull-to-master-build
+    - test-pull-to-master-unit-tests
+
+
+# In this stage we test code pulled to master
+# as a trigger to this merge request to master branch is used
+test pull to master build win:
+    # Build the library
+    stage: test-pull-to-master-build
+
+    # see https://stackoverflow.com/questions/38140996/how-can-i-pass-artifacts-to-another-stage
+    artifacts:
+        untracked: true
+        expire_in: 1 hour
+
+    only:
+        - merge_requests
+    except:
+        - release
+        - prebuild
+    tags:
+        - win-ers02
+    script:
+        - echo "Building for Window. Username is $GITLAB_USER_LOGIN! username='$env:USERNAME'"
+        - if ( -not $env:VsInstallPath ){ if ( -not $env:VsVsWhere ){ $env:VsVsWhere="C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"; } $env:VsInstallPath=&"$env:VsVsWhere" -version 16.0 -property installationpath }
+        - Import-Module "$env:VsInstallPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+        - Enter-VsDevShell -VsInstallPath "$env:VsInstallPath" -SkipAutomaticLocation
+        - git submodule sync --recursive
+        - git submodule update --init --recursive
+        - cmd /C .\scripts\.cicd\win_test_pull_to_master_build.bat
+        - echo "compilation done"
+
+# In this stage we test code pulled to master
+# as a trigger to this merge request to master branch is used
+test pull to master unit tests:
+    # Build the library
+    stage: test-pull-to-master-unit-tests
+    #dependencies: 
+    #    - test pull to master build
+    needs: [test pull to master build win]
+    
+    only:
+        - merge_requests
+    except:
+        - release
+        - prebuild
+    tags:
+        - win-ers02
+    script:
+        - if ( -not $env:VsInstallPath ){ if ( -not $env:VsVsWhere ){ $env:VsVsWhere="C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"; } $env:VsInstallPath=&"$env:VsVsWhere" -version 16.0 -property installationpath }
+        - Import-Module "$env:VsInstallPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+        - Enter-VsDevShell -VsInstallPath "$env:VsInstallPath" -SkipAutomaticLocation
+        - git submodule sync --recursive
+        - git submodule update --init --recursive
+        - cmd /C .\scripts\.cicd\win_test_pull_to_master_test.bat
+        - echo "Tests done"

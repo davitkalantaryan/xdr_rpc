@@ -52,16 +52,17 @@ static char sccsid[] = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
  * and a record/tcp stream.
  */
 
-#include <stdio.h>
+
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/types.h>
 #include <rpc/svc.h>
 #include <rpc/doocs_rpc_unix_like_functions.h>
-#include <errno.h>
 #ifndef _WIN32
 #include <sys/socket.h>
-#endif
 #include <errno.h>
+#endif
+#include <stdio.h>
+#include "xdr_rpc_debug.h"
 
 #ifdef _WIN32
 static int xabort1(SVCXPRT *__xprt, xdrproc_t __xdr_args,caddr_t args_ptr);
@@ -117,7 +118,7 @@ static struct xp_ops svctcp_rendezvous_op = {
 // struct ct_data *,caddr_t,int
 static int readtcp(register struct ct_data* xprt,caddr_t buf,register int len);
 static int writetcp(register struct ct_data* xprt,caddr_t buf, int len);
-static SVCXPRT *makefd_xprt(int fd,u_int sendsize,u_int recvsize);
+static SVCXPRT *makefd_xprt(rpcsocket_t fd,u_int sendsize,u_int recvsize);
 
 struct tcp_rendezvous { /* kept in xprt->xp_p1 */
 	u_int sendsize;
@@ -151,6 +152,7 @@ struct tcp_conn {  /* kept in xprt->xp_p1 */
  * how big the send and receive buffers are via the second and third parms;
  * 0 => use the system default.
  */
+MINI_XDR_EXPORT
 SVCXPRT *
 svctcp_create(sock, sendsize, recvsize)
 	register int sock;
@@ -164,12 +166,8 @@ svctcp_create(sock, sendsize, recvsize)
 	int len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
-#ifdef _WIN32
 		if ((sock = (int)socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-#else
-		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-#endif
-			perror("svctcp_.c - udp socket creation problem");
+			XDR_RPC_ERR("udp socket creation problem. errorCode: %d", COMMON_SOCK_ERRNO);
 			return ((SVCXPRT *)NULL);
 		}
 		madesock = TRUE;
@@ -182,25 +180,22 @@ svctcp_create(sock, sendsize, recvsize)
 	}
 	if ((getsockname(sock, (struct sockaddr *)&addr, &len) != 0)  ||
 	    (listen(sock, 2) != 0)) {
-		perror("svctcp_.c - cannot getsockname or listen");
-		if (madesock)
-#ifdef _WIN32
-		       (void)closesocket(sock);
-#else
-		       (void)close(sock);
-#endif
+		XDR_RPC_ERR("cannot getsockname or listen. ErrorCode: %d",COMMON_SOCK_ERRNO);
+		if (madesock) {
+			(void)closesocket(sock);
+		}
 		return ((SVCXPRT *)NULL);
 	}
 	r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
 	if (r == NULL) {
-		(void) fprintf(stderr, "svctcp_create: out of memory\n");
+		XDR_RPC_ERR("svctcp_create: out of memory");
 		return (NULL);
 	}
 	r->sendsize = sendsize;
 	r->recvsize = recvsize;
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
-		(void) fprintf(stderr, "svctcp_create: out of memory\n");
+		XDR_RPC_ERR("out of memory");
 		return (NULL);
 	}
 	xprt->xp_p2 = NULL;
@@ -223,13 +218,12 @@ svcfd_create(fd, sendsize, recvsize)
 	u_int sendsize;
 	u_int recvsize;
 {
-
 	return (makefd_xprt(fd, sendsize, recvsize));
 }
 
 static SVCXPRT *
 makefd_xprt(fd, sendsize, recvsize)
-	int fd;
+	rpcsocket_t fd;
 	u_int sendsize;
 	u_int recvsize;
 {
@@ -238,12 +232,12 @@ makefd_xprt(fd, sendsize, recvsize)
 
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == (SVCXPRT *)NULL) {
-		(void) fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+		XDR_RPC_ERR("makefd_xprt: out of memory");
 		goto done;
 	}
 	cd = (struct tcp_conn *)mem_alloc(sizeof(struct tcp_conn));
 	if (cd == (struct tcp_conn *)NULL) {
-		(void) fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+		XDR_RPC_ERR("makefd_xprt: out of memory");
 		mem_free((char *) xprt, sizeof(SVCXPRT));
 		xprt = (SVCXPRT *)NULL;
 		goto done;
@@ -266,7 +260,7 @@ makefd_xprt(fd, sendsize, recvsize)
 static bool_t
 rendezvous_request(SVCXPRT * xprt, struct rpc_msg *__msg)
 {
-	int sock;
+	rpcsocket_t sock;
 	struct tcp_rendezvous *r;
 	struct sockaddr_in addr;
 	int len;
@@ -274,15 +268,11 @@ rendezvous_request(SVCXPRT * xprt, struct rpc_msg *__msg)
 	r = (struct tcp_rendezvous *)xprt->xp_p1;
     again:
 	len = sizeof(struct sockaddr_in);
-	if ((sock = (int)accept(xprt->xp_sock, (struct sockaddr *)&addr,
-	    &len)) < 0) {
-#ifdef _WIN32
-		if (WSAGetLastError() == WSAEINTR)
-#else
-		if (errno == EINTR)
-#endif
+	if ((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr,&len)) == INVALID_SOCKET) {
+		if (COMMON_SOCK_ERRNO == WSAEINTR) {
 			goto again;
-	       return (FALSE);
+		}
+		return (FALSE);
 	}
 	/*
 	 * make a new transporter (re-uses xprt)
@@ -296,7 +286,6 @@ rendezvous_request(SVCXPRT * xprt, struct rpc_msg *__msg)
 static enum xprt_stat
 rendezvous_stat(SVCXPRT *__xprt)
 {
-
 	return (XPRT_IDLE);
 }
 
@@ -307,11 +296,7 @@ svctcp_destroy(xprt)
 	register struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
 	xprt_unregister(xprt);
-#ifdef _WIN32
 	(void)closesocket(xprt->xp_sock);
-#else
-	(void)close(xprt->xp_sock);
-#endif
 	if (xprt->xp_port != 0) {
 		/* a rendezvouser socket */
 		xprt->xp_port = 0;
@@ -341,7 +326,7 @@ readtcp(xprt_a, buf, len)
 	register int len;
 {
 	register SVCXPRT *xprt = (SVCXPRT *)xprt_a;
-	register int sock = xprt->xp_sock;
+	register rpcsocket_t sock = xprt->xp_sock;
 #ifdef FD_SETSIZE
 	fd_set mask;
 	fd_set readfds;
@@ -354,17 +339,8 @@ readtcp(xprt_a, buf, len)
 #endif /* def FD_SETSIZE */
 	do {
 		readfds = mask;
-#ifdef WIN32
-		if (select(0 /* unused in winsock */, &readfds, NULL, NULL,
-#else
-		if (select(_rpc_dtablesize(), &readfds, (int*)NULL, (int*)NULL, 
-#endif
-			   &wait_per_try) <= 0) {
-#ifdef _WIN32
-			if (WSAGetLastError() == WSAEINTR) {
-#else
-			if (errno == EINTR) {
-#endif
+		if (select(_rpc_dtablesize(), &readfds, NULL, NULL,&wait_per_try) <= 0) {
+			if (WSAEINTR == WSAEINTR) {
 				continue;
 			}
 			goto fatal_err;
@@ -374,13 +350,11 @@ readtcp(xprt_a, buf, len)
 #else
 	} while (readfds != mask);
 #endif /* def FD_SETSIZE */
-#ifdef _WIN32
-	if ((len = recv(sock, buf, len, 0)) > 0) {
-#else
-	if ((len = read(sock, buf, len)) > 0) {
-#endif
+	
+	if ((len = RecvOrRead(sock, buf, len)) > 0) {
 		return (len);
 	}
+
 fatal_err:
 	((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
 	return (-1);
@@ -400,11 +374,7 @@ writetcp(xprt_a, buf, len)
 	register int i, cnt;
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
-#ifdef _WIN32
-		if ((i = send(xprt->xp_sock, buf, cnt, 0)) < 0) {
-#else
-		if ((i = write(xprt->xp_sock, buf, cnt)) < 0) {
-#endif
+		if ((i = SendOrWrite(xprt->xp_sock, buf, cnt)) < 0) {
 			((struct tcp_conn *)(xprt->xp_p1))->strm_stat =
 			    XPRT_DIED;
 			return (-1);

@@ -61,6 +61,8 @@ static char sccsid[] = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
  * Now go hang yourself.
  */
 
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
 #include <rpc/pmap_clnt.h>
 #include <errno.h>
 #include <stdio.h>
@@ -175,32 +177,20 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	struct timeval now;
 	struct rpc_msg call_msg;
     
-    XDR_RPC_DEBUG("file:%s,line:%d,*sockp=%d\n",__FILE__,__LINE__,(int)(*sockp));
+    XDR_RPC_DEBUG("*sockp=%d",(int)(*sockp));
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
 	if (!h) {
-		(void)fprintf(stderr, "clnttcp_create: out of memory\n");
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = ENOMEM;
-#else
-		rpc_createerr.cf_error.re_errno = errno;
-#endif
+		XDR_RPC_ERR("out of memory");
 		goto fooy;
 	}
 	ct = (struct ct_data *)mem_alloc(sizeof(*ct));
 	if (!ct) {
-		(void)fprintf(stderr, "clnttcp_create: out of memory\n");
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-#ifdef _WIN32
-		rpc_createerr.cf_error.re_errno = ENOMEM;
-#else
-		rpc_createerr.cf_error.re_errno = errno;
-#endif
+		XDR_RPC_ERR("out of memory");
 		goto fooy;
 	}
     
-    XDR_RPC_DEBUG("file:%s,line:%d,*sockp=%d,raddr->sin_port=%d\n",__FILE__,__LINE__,(int)(*sockp),(int)raddr->sin_port);
+    XDR_RPC_DEBUG("*sockp=%d,raddr->sin_port=%d",(int)(*sockp),(int)raddr->sin_port);
 
 	/*
 	 * If no port number given ask the pmap for one
@@ -216,7 +206,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 		raddr->sin_port = htons(port);
 	}
     
-    XDR_RPC_DEBUG("file:%s,line:%d,*sockp=%d,raddr->sin_port=%d\n",__FILE__,__LINE__,(int)(*sockp),(int)raddr->sin_port);
+    XDR_RPC_DEBUG("*sockp=%d,raddr->sin_port=%d",(int)(*sockp),(int)raddr->sin_port);
 
 	/*
 	 * If no socket given, open one
@@ -225,8 +215,6 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 		*sockp = (int)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
 		if ((*sockp < 0)|| (connect(*sockp, (struct sockaddr *)raddr,sizeof(*raddr)) < 0)) {
-			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-			rpc_createerr.cf_error.re_errno = WSAGetLastError();
 			(void)closesocket(*sockp);	
 			goto fooy;
 		}
@@ -247,7 +235,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * Initialize call message
 	 */
 	(void)gettimeofday(&now, (struct timezone *)0);
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d",(int)now.tv_sec,(int)now.tv_usec);
 	call_msg.rm_xid = getpid() ^ now.tv_sec ^ now.tv_usec;
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -257,17 +245,17 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	/*
 	 * pre-serialize the staic part of the call msg and stash it away
 	 */
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d",(int)now.tv_sec,(int)now.tv_usec);
 	xdrmem_create(&(ct->ct_xdrs), ct->ct_mcall, MCALL_MSG_SIZE,XDR_ENCODE);
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d",(int)now.tv_sec,(int)now.tv_usec);
 	if (! xdr_callhdr(&(ct->ct_xdrs), &call_msg)) {
-		XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+		XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d\n",(int)now.tv_sec,(int)now.tv_usec);
 		if (ct->ct_closeit) {
 			(void)closesocket(*sockp);
 		}
 		goto fooy;
 	}
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d\n",(int)now.tv_sec,(int)now.tv_usec);
 	ct->ct_mpos = XDR_GETPOS(&(ct->ct_xdrs));
 	XDR_DESTROY(&(ct->ct_xdrs));
 
@@ -275,13 +263,13 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * Create a client handle which uses xdrrec for serialization
 	 * and authnone for authentication.
 	 */
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d\n",(int)now.tv_sec,(int)now.tv_usec);
 	xdrrec_create(&(ct->ct_xdrs), sendsz, recvsz,(caddr_t)ct, readtcp, writetcp);
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d\n",(int)now.tv_sec,(int)now.tv_usec);
 	h->cl_ops = &tcp_ops;
 	h->cl_private = (caddr_t) ct;
 	h->cl_auth = authnone_create();
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,now.tv_sec=%d,now.tv_usec=%d\n",__FILE__,__LINE__,__FUNCTION__,(int)now.tv_sec,(int)now.tv_usec);
+	XDR_RPC_DEBUG("now.tv_sec=%d,now.tv_usec=%d\n",(int)now.tv_sec,(int)now.tv_usec);
 	return (h);
 
 fooy:
@@ -326,7 +314,7 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	XDR_RPC_REGISTER bool_t shipnow;
 	int refreshes = 2;
 		
-	XDR_RPC_DEBUG("file:%s,line:%d,proc=%d\n",__FILE__,__LINE__,(int)proc);
+	XDR_RPC_DEBUG("proc=%d",(int)proc);
 
 	if (!ct->ct_waitset) {
 		ct->ct_wait = timeout;
@@ -335,7 +323,7 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 		}
 	}
 	
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 
 	shipnow =
 	    (xdr_results == (xdrproc_t)0 && timeout.tv_sec == 0
@@ -345,27 +333,27 @@ call_again:
 	xdrs->x_op = XDR_ENCODE;
 	ct->ct_error.re_status = RPC_SUCCESS;
 	x_id = ntohl(--(*msg_x_id));
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	
 		
 	if ((! XDR_PUTBYTES(xdrs, ct->ct_mcall, ct->ct_mpos)) ||
 	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xdr_args)(xdrs, args_ptr))) {
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		if (ct->ct_error.re_status == RPC_SUCCESS)
 			ct->ct_error.re_status = RPC_CANTENCODEARGS;
-		XDR_RPC_DEBUG("file:%s,line:%d,xdr_args=%p, gettid()=%d\n",__FILE__,__LINE__,(void*)xdr_args,(int)pthread_self_emscr());
+		XDR_RPC_DEBUG("xdr_args=%p, gettid()=%d",(void*)xdr_args,(int)pthread_self_emscr());
 		(void)xdrrec_endofrecord(xdrs, TRUE);
-		XDR_RPC_DEBUG("file:%s,line:%d,xdr_args=%p, gettid()=%d\n",__FILE__,__LINE__,(void*)xdr_args,(int)pthread_self_emscr());
+		XDR_RPC_DEBUG("xdr_args=%p, gettid()=%d\n",(void*)xdr_args,(int)pthread_self_emscr());
 		return (ct->ct_error.re_status);
 	}
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	if (! xdrrec_endofrecord(xdrs, shipnow)){
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		return (ct->ct_error.re_status = RPC_CANTSEND);
 	}
-	XDR_RPC_DEBUG("file:%s,line:%d,shipnow=%d\n",__FILE__,__LINE__,shipnow);
+	XDR_RPC_DEBUG("shipnow=%d",shipnow);
 	if (! shipnow)
 		return (RPC_SUCCESS);
 	/*
@@ -384,32 +372,32 @@ call_again:
 		reply_msg.acpted_rply.ar_verf = _null_auth;
 		reply_msg.acpted_rply.ar_results.where = NULL;
 		reply_msg.acpted_rply.ar_results.proc = &xdr_void;
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		if (! xdrrec_skiprecord(xdrs)){
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+			XDR_RPC_DEBUG("  ");
 			return (ct->ct_error.re_status);
 		}
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		/* now decode and validate the response header */
 		if (! xdr_replymsg(xdrs, &reply_msg)) {
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+			XDR_RPC_DEBUG("  ");
 			if (ct->ct_error.re_status == RPC_SUCCESS)
 				continue;
 			return (ct->ct_error.re_status);
 		}
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		if (reply_msg.rm_xid == x_id)
 			break;
 	}
 
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	/*
 	 * process header
 	 */
 	_seterr_reply(&reply_msg, &(ct->ct_error));
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	if (ct->ct_error.re_status == RPC_SUCCESS) {
-		XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		if (! AUTH_VALIDATE(h->cl_auth, &reply_msg.acpted_rply.ar_verf)) {
 			ct->ct_error.re_status = RPC_AUTHERROR;
 			ct->ct_error.re_why = AUTH_INVALIDRESP;
@@ -420,18 +408,18 @@ call_again:
 		/* free verifier ... */
 		if (reply_msg.acpted_rply.ar_verf.oa_base != NULL) {
 			xdrs->x_op = XDR_FREE;
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+			XDR_RPC_DEBUG("  ");
 			(void)xdr_opaque_auth(xdrs, &(reply_msg.acpted_rply.ar_verf));
-			XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+			XDR_RPC_DEBUG("  ");
 		}
 	}  /* end successful completion */
 	else {
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+		XDR_RPC_DEBUG("  ");
 		/* maybe our credentials need to be refreshed ... */
 		if (refreshes-- && AUTH_REFRESH(h->cl_auth))
 			goto call_again;
 	}  /* end of unsuccessful completion */
-	XDR_RPC_DEBUG("file:%s,line:%d\n",__FILE__,__LINE__);
+	XDR_RPC_DEBUG("  ");
 	return (ct->ct_error.re_status);
 }
 
@@ -505,11 +493,7 @@ clnttcp_destroy(h)
 	    (struct ct_data *) h->cl_private;
 
 	if (ct->ct_closeit) {
-#ifdef _WIN32
 		(void)closesocket(ct->ct_sock);
-#else
-		(void)close(ct->ct_sock);
-#endif
 	}
 	XDR_DESTROY(&(ct->ct_xdrs));
 	mem_free(ct, sizeof(struct ct_data));
@@ -528,9 +512,9 @@ readtcp(ct, buf, len)
 	caddr_t buf;
 	XDR_RPC_REGISTER int len;
 {
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,sock=%d,len=%d\n",__FILE__,__LINE__,__FUNCTION__,ct->ct_sock,len);
+	XDR_RPC_DEBUG("sock=%d,len=%d",(int)ct->ct_sock,len);
 	len = (int)recv(ct->ct_sock, buf, (sndrcv_size_t)len, 0);
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,sock=%d,len=%d\n",__FILE__,__LINE__,__FUNCTION__,ct->ct_sock,len);
+	XDR_RPC_DEBUG("sock=%d,len=%d\n",(int)ct->ct_sock,len);
 	
 	if(len==SOCKET_ERROR) {
 		ct->ct_error.re_status = RPC_CANTRECV;
@@ -549,7 +533,7 @@ writetcp(ct, buf, len)
 {
 	XDR_RPC_REGISTER int i, cnt;
 
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s\n",__FILE__,__LINE__,__FUNCTION__);
+	XDR_RPC_DEBUG("  ");
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
 		if ((i = send(ct->ct_sock, buf, cnt, 0)) == SOCKET_ERROR) {
@@ -558,7 +542,7 @@ writetcp(ct, buf, len)
 			return (-1);
 		}
 	}
-	XDR_RPC_DEBUG("file:%s,line:%d,func:%s,sock=%d,len=%d\n",__FILE__,__LINE__,__FUNCTION__,ct->ct_sock,len);
+	XDR_RPC_DEBUG("sock=%d,len=%d\n",(int)ct->ct_sock,len);
 	return (len);
 }
 

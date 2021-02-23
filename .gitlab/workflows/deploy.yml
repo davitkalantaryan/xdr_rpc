@@ -1,0 +1,21 @@
+# 
+# YAML file for gitlab CI/CI
+# created on:   2021 Jan 28
+# 
+
+
+stages:
+    - deploy
+
+# In this stage we prepare installers and other artifacts of this repository
+# for time being we use push event to `release` branch
+deploy:
+    stage: deploy
+    only:
+        - release
+    tags:
+        - win-ers02
+    script:
+        - git submodule sync --recursive
+        - git submodule update --init --recursive
+        - echo "Will be implemented"

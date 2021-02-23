@@ -48,6 +48,9 @@ static char sccsid[] = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include <rpc/wrpc_first_com_include.h>
+#include "xdr_rpc_debug.h"
+
 #ifdef _WIN32
 
 #include <WinSock2.h>
@@ -76,19 +79,26 @@ static char sccsid[] = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
  */
 #endif
 
-static int GetHostSinAddr(struct in_addr* a_sin_addr_p);
+MINI_XDR_DLL_PRIVATE 
+int GetHostSinAddrAndReturnProto(struct in_addr* sin_addr_p, const char* hostName, const char* protoName, const char* portAsStrOrServiceName);
+MINI_XDR_DLL_PRIVATE 
+int GetHostSinAddrAndReturnProto2(struct in_addr* sin_addr_p, const char* hostName, const char* protoName, int portNumber);
 
 MINI_XDR_EXPORT
-void get_myaddress(addr)
-	struct sockaddr_in *addr;
+void get_myaddress(struct sockaddr_in* addr)
 {
 #ifdef _WIN32
+
+	char my_name[MAX_NAME_LEN];
+
+	gethostname(my_name, MAX_NAME_LEN);
 
 	addr->sin_family = AF_INET;
 	addr->sin_port = htons(PMAPPORT);
 	//memcpy(&addr->sin_addr,Hostent->h_addr,Hostent->h_length);
-	if(GetHostSinAddr(&addr->sin_addr)){
-		fprintf(stderr,"Unable to get local ipv4 address. Error code is: %d\n",WSAGetLastError());
+	if(GetHostSinAddrAndReturnProto(&addr->sin_addr,my_name,NULL,NULL)){
+		XDR_RPC_ERR("Unable to get local ipv4 address. Error code is: %d\n",WSAGetLastError());
+		exit(1);
 	}
 
 #else	
@@ -125,39 +135,4 @@ void get_myaddress(addr)
 	}
 	(void) close(s);
 #endif
-}
-
-
-static int GetHostSinAddr(struct in_addr* a_sin_addr_p)
-{
-	int nReturn = 1;
-	char my_name[MAX_NAME_LEN];
-	ADDRINFOA* pAddrInfo = NULL;
-	ADDRINFOA* ptr;
-	INT getAddrInfoRet;
-	struct sockaddr_in* ipv4_addr_ptr;
-
-	gethostname(my_name, MAX_NAME_LEN);
-	getAddrInfoRet = getaddrinfo(my_name, NULL, NULL, &pAddrInfo);
-	if (getAddrInfoRet) {
-		goto returnPoint;
-	}
-
-	for (ptr = pAddrInfo; ptr != NULL; ptr = ptr->ai_next) {
-		switch (ptr->ai_family) {
-		case AF_INET:
-			ipv4_addr_ptr = (struct sockaddr_in*)ptr->ai_addr;
-			nReturn = 0;
-			goto returnPoint;
-			break;
-		default:
-			break;
-		}
-	}
-
-	nReturn = 0;
-returnPoint:
-	if (pAddrInfo) { freeaddrinfo(pAddrInfo); }
-
-	return nReturn;
 }

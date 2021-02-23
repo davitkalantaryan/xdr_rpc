@@ -59,6 +59,7 @@
 #include <rpc/svc_auth.h>	/* service side authenticator */
 
 #include <rpc/auth.h>
+#include <rpc/doocs_rpc_unix_like_functions.h>
 
 #ifndef fds_bits
 #define fds_bits	fd_array
@@ -69,6 +70,8 @@ MINI_XDR_BEGIN_C_DECLS
 
 // todo: delete from here
 //MINI_XDR_EXPORT int _rpc_dtablesize(void);
+MINI_XDR_EXPORT void SetXdrRpcLogLevel(int a_nLogLevel);
+MINI_XDR_EXPORT int  GetXdrRpcLogLevel(void);
 
 MINI_XDR_END_C_DECLS
 
