@@ -59,6 +59,7 @@
 #include <rpc/svc_auth.h>	/* service side authenticator */
 
 #include <rpc/auth.h>
+#include <rpc/rpc_unix_like_functions.h>
 
 #ifndef fds_bits
 #define fds_bits	fd_array

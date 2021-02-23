@@ -355,19 +355,19 @@ MINI_XDR_EXPORT CLIENT *clntudp_bufcreate __P((struct sockaddr_in *__raddr,
 /*
  * Print why creation failed
  */
-//MINI_XDR_EXPORT void clnt_pcreateerror __P((char *__msg));	/* stderr */
-//MINI_XDR_EXPORT char *clnt_spcreateerror __P((char *__msg));	/* string */
+MINI_XDR_EXPORT void clnt_pcreateerror __P((char *__msg));	/* stderr */
+MINI_XDR_EXPORT char *clnt_spcreateerror __P((char *__msg));	/* string */
 
 /*
  * Like clnt_perror(), but is more verbose in its output
  */
-//MINI_XDR_EXPORT void clnt_perrno __P((enum clnt_stat __num));	/* stderr */
+MINI_XDR_EXPORT void clnt_perrno __P((enum clnt_stat __num));	/* stderr */
 
 /*
  * Print an English error message, given the client error code
  */
-//MINI_XDR_EXPORT void clnt_perror __P((CLIENT *__clnt, char *__msg)); 	/* stderr */
-//MINI_XDR_EXPORT char *clnt_sperror __P((CLIENT *__clnt, char *__msg));	/* string */
+MINI_XDR_EXPORT void clnt_perror __P((CLIENT *__clnt, char *__msg)); 	/* stderr */
+MINI_XDR_EXPORT char *clnt_sperror __P((CLIENT *__clnt, char *__msg));	/* string */
 
 /*
  * If a creation fails, the following allows the user to figure out why.
@@ -382,7 +382,7 @@ struct rpc_createerr {
 /*
  * Copy error message to buffer.
  */
-//MINI_XDR_EXPORT char *clnt_sperrno __P((enum clnt_stat __num));	/* string */
+MINI_XDR_EXPORT char *clnt_sperrno __P((enum clnt_stat __num));	/* string */
 
 
 /*
