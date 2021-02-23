@@ -70,7 +70,7 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 #ifdef FD_SETSIZE
 static SVCXPRT **xports;
 #ifdef _WIN32
-static int sizeof_xports = FD_SETSIZE;
+static rpcsocket_t sizeof_xports = FD_SETSIZE;
 #endif
 #else
 #define NOFILE 32

@@ -169,6 +169,8 @@ returnPoint:
 
 #else   // #ifdef _WIN32
 
+#error implement unix part
+
 	// todo: implement case of UNIX
 	(void)a_hostName;
 	(void)a_sin_addr_p;

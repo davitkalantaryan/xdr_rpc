@@ -13,6 +13,7 @@
 #include <process.h>
 #else
 #endif
+#include "mini_xdr_rpc_src_private.h"
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64

@@ -180,7 +180,6 @@ clnt_sperror(rpch, s)
 	char *s;
 {
 	struct rpc_err e;
-	//void clnt_perrno();
 	const char *err;
 	char *str = _buf2();
 	char *strstart = str;
@@ -286,7 +285,7 @@ clnt_perror(rpch, s)
 	CLIENT *rpch;
 	char *s;
 {
-	(void) fprintf(stderr,"%s",clnt_sperror(rpch,s));
+		XDR_RPC_ERR("%s",clnt_sperror(rpch,s));
 }
 
 
@@ -358,7 +357,7 @@ void
 clnt_perrno(num)
 	enum clnt_stat num;
 {
-	(void) fprintf(stderr,"%s",clnt_sperrno(num));
+	XDR_RPC_ERR("%s",clnt_sperrno(num));
 }
 
 
@@ -412,7 +411,7 @@ void
 clnt_pcreateerror(s)
 	char *s;
 {
-	(void) fprintf(stderr,"%s",clnt_spcreateerror(s));
+	XDR_RPC_ERR("%s",clnt_spcreateerror(s));
 }
 
 
