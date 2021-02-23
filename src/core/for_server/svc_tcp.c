@@ -56,7 +56,7 @@ static char sccsid[] = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/types.h>
 #include <rpc/svc.h>
-#include <rpc/rpc_unix_like_functions.h>
+#include <rpc/doocs_rpc_unix_like_functions.h>
 #ifndef _WIN32
 #include <sys/socket.h>
 #include <errno.h>
