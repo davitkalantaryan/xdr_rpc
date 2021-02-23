@@ -41,7 +41,7 @@ MINI_XDR_EXPORT_UNIX_LIKE int gettimeofday(struct timeval* tv, struct timezone* 
 MINI_XDR_EXPORT int bindresvport(int sd, struct sockaddr_in* sin);
 MINI_XDR_EXPORT int bindresvport_real(int sd, struct sockaddr_in* sin);
 
-#ifdef bindresvport_real_is_needed
+#if defined(bindresvport_real_is_needed) && (bindresvport_real_is_needed)
 #ifdef bindresvport
 #undef bindresvport
 #endif
