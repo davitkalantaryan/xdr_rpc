@@ -1,0 +1,17 @@
+# 
+# YAML file for gitlab CI/CI
+# created on:   2021 Jan 28
+# 
+
+
+include: 
+    - local: '/.gitlab/workflows/prebuild.yml'
+    - local: '/.gitlab/workflows/test_pull_to_master.yml'
+    - local: '/.gitlab/workflows/deploy.yml'
+
+# We have 3 different cases
+stages:
+    - prebuild
+    - test-pull-to-master-build
+    - test-pull-to-master-unit-tests
+    - deploy

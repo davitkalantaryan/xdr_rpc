@@ -1,0 +1,117 @@
+#
+# file:			release-deploy.yml
+# created on:	2020 Sep 25
+#
+# usefull urls:
+#				1. https://docs.github.com/en/actions
+#				2. https://github.com/actions/starter-workflows
+#				3. https://github.com/actions/download-artifact
+#
+
+
+name: release-deploy
+on:
+    push:
+        branches: [ release ]
+    workflow_dispatch:
+
+env:
+  deployUser: doocsdev
+  #deployRoot: /home/${{env.deployUser}}/build/3rd-party
+  deployHost: mtcapitzcpu7.ifh.de
+  #deployHostAndUser: ${{env.deployUser}}@${{env.deployHost}}
+  nodeVersion: 14.15.4
+
+
+jobs:
+
+    # matrix for debian linuxes (for now ubuntu-18.04 and ubuntu-20.04)
+    debian-linuxes:
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            #os: [ubuntu-18.04, ubuntu-20.04, LinuxMint-19.3]
+            #os: [ubuntu-18.04, ubuntu-20.04]
+            # for time being let's use only one platform on matrix, because running is not free
+            os: [ubuntu-18.04]
+            include:
+              # for all linuxes we should specify releaseCodeName (lsbCode)
+              # releaseCodeName=$lsbCode=`lsb_release -c | cut -f 2`=`lsb_release -sc` #
+              - os: ubuntu-18.04
+                releaseCodeName: bionic
+              #- os: ubuntu-20.04
+              #  releaseCodeName: focal
+              #- os: LinuxMint-19.3
+              #  releaseCodeName: tricia
+        steps:
+            - uses: actions/checkout@v2
+
+            #- name: Install SSH key
+            #  uses: shimataro/ssh-key-action@v2
+            #  with:
+            #   key: ${{ secrets.SSH_KEY }}
+            #   # known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+            - name: Compilation on ${{matrix.releaseCodeName}}-${{ matrix.os }}
+              run:  echo "will be implemented"
+
+    # This is for windows
+    windows:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  submodules: recursive
+            - name: Checkout submodules
+              run: git submodule update --init --recursive
+
+            #- name: Install SSH key
+            #  uses: shimataro/ssh-key-action@v2
+            #  with:
+            #   key: ${{ secrets.SSH_KEY }}
+            #   #known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+            - name: Setup MSBuild.exe
+              uses: microsoft/setup-msbuild@v1.0.2
+
+            - name: Setup developer command prompt
+              uses: ilammy/msvc-dev-cmd@v1
+
+            - uses: actions/setup-java@v1
+              with:
+                 java-version: '9.0.4' # The JDK version to make available on the path.
+                 java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+                 architecture: x64 # (x64 or x86) - defaults to x64
+
+            - name: Setup node version ${{env.nodeVersion}}
+              uses: actions/setup-node@v1
+              with:
+                 # The Node.js version to configure
+                 node-version: ${{env.nodeVersion}}
+
+            - name: Preparing host for compilation
+              run: echo "Something to prepare???"
+
+            - name: Compiling library
+              run: cmd /C msbuild_all.bat  "arm,arm64,x64,x86"  "debug,release"  build
+              #working-directory: core
+
+            #- name: Deploy something
+            #  run: |
+            #      ssh ${{env.deployHostAndUser}} 'mkdir -p ${{env.deployRootOut}}/sys/win_x64'
+            #      scp  core/sssnapi/build/Debug/something.node  ${{env.deployHostAndUser}}:${{env.deployRootOut}}/sys/${{matrix.releaseCodeName}}/.
+            #      echo " win_x64 something file copy done "
+            
+            - name: artifact win_x64 watchdog-server
+              uses: actions/upload-artifact@v2
+              with:
+                 name: win_x64-debug-watchdog-server
+                 path: sys/win_x64/Debug/bin/watchdog_server.exe
+
+    mac:
+        #needs: prepare-ubuntu18-host
+        runs-on: macos-latest
+        steps:
+            #- uses: actions/checkout@v2
+            - run: >
+                echo "Macos tests to be done"

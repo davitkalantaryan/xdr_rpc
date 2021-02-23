@@ -3,25 +3,33 @@
 *.obj
 *.pro.user*
 
-sys
+/sys
 
-prj/*/*/*
-!prj/*/*_vs/*.sln
-!prj/*/*_vs/*.vcxproj
-!prj/*/*_vs/*.vcxproj.filters
-!prj/*/*_vs/*.props
+/prj/*/*/*
+!/prj/*/*_vs/*.sln
+!/prj/*/*_vs/*.vcxproj
+!/prj/*/*_vs/*.vcxproj.filters
+!/prj/*/*_vs/*.vcxproj.user
+!/prj/*/*_vs/*.props
 #
-!prj/*/*_qt/*.pro
-!prj/*/*_qt/*.pri
+!/prj/*/*_qt/*.pro
+!/prj/*/*_qt/*.pri
 #
-!prj/*/*_mkfl/*Makefile*
+!/prj/*/*_mkfl/*Makefile*
+#
+!/prj/*/*_mult/*.sln
+!/prj/*/*_mult/*.vcxproj
+!/prj/*/*_mult/*.vcxproj.filters
+!/prj/*/*_mult/packages.config
+!/prj/*/*_mult/*Makefile*
+
 
 compile_result_*.txt
 
-workspaces/*/*
-!workspaces/*_vs/*.sln
-!workspaces/*_vs/*.vcxproj
-!workspaces/*_vs/*.vcxproj.filters
-!workspaces/*_vs/*.props
-!workspaces/*_qt/*.pro
-!workspaces/*_qt/*.pri
+/workspaces/*/*
+!/workspaces/*_vs/*.sln
+!/workspaces/*_vs/*.vcxproj
+!/workspaces/*_vs/*.vcxproj.filters
+!/workspaces/*_vs/*.props
+!/workspaces/*_qt/*.pro
+!/workspaces/*_qt/*.pri
