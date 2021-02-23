@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{C29B5904-1251-4D15-AEEB-C1EC0D400566}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\.gitignore = ..\..\.gitignore
+		..\..\.gitlab-ci.yml = ..\..\.gitlab-ci.yml
 		..\..\.gitmodules = ..\..\.gitmodules
 		..\..\meson.build = ..\..\meson.build
 		..\..\msbuild_all.bat = ..\..\msbuild_all.bat
@@ -41,6 +42,24 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FE90AB11-FE6C-4742-8785-B766946387EA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "googletest_getter", "..\..\prj\tests\googletest_mult\googletest_getter.vcxproj", "{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{D49F38F7-FD33-4DCF-8752-45E31DD40AA9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{6CE6508E-391C-45EE-853B-E60EE2B63F08}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\.github\workflows\deploy.yml = ..\..\.github\workflows\deploy.yml
+		..\..\.github\workflows\prebuild.yml = ..\..\.github\workflows\prebuild.yml
+		..\..\.github\workflows\test_pull_to_master.yml = ..\..\.github\workflows\test_pull_to_master.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".gitlab", ".gitlab", "{9B6CCDF2-FEB3-4E5F-BF5A-509887DF7AC5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{79AEAA1B-E963-438A-BCA7-3864D1CE44C3}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\.gitlab\workflows\deploy.yml = ..\..\.gitlab\workflows\deploy.yml
+		..\..\.gitlab\workflows\prebuild.yml = ..\..\.gitlab\workflows\prebuild.yml
+		..\..\.gitlab\workflows\test_pull_to_master.yml = ..\..\.gitlab\workflows\test_pull_to_master.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,15 +124,11 @@ Global
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|ARM.ActiveCfg = Debug|Win32
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|ARM64.ActiveCfg = Debug|Win32
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x64.ActiveCfg = Debug|x64
-		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x64.Build.0 = Debug|x64
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x86.ActiveCfg = Debug|Win32
-		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Debug|x86.Build.0 = Debug|Win32
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|ARM.ActiveCfg = Release|Win32
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|ARM64.ActiveCfg = Release|Win32
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x64.ActiveCfg = Release|x64
-		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x64.Build.0 = Release|x64
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x86.ActiveCfg = Release|Win32
-		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +142,10 @@ Global
 		{44B058B0-7D28-432C-9A3E-867E7A089EA4} = {AFEB2424-9949-4986-9E2A-49409E35C891}
 		{FE90AB11-FE6C-4742-8785-B766946387EA} = {7157CD3F-776D-4E1F-B7FB-2D65691F9452}
 		{E6F8B6C2-4CA9-4B3A-9A00-83D011DE88FA} = {FE90AB11-FE6C-4742-8785-B766946387EA}
+		{D49F38F7-FD33-4DCF-8752-45E31DD40AA9} = {C29B5904-1251-4D15-AEEB-C1EC0D400566}
+		{6CE6508E-391C-45EE-853B-E60EE2B63F08} = {D49F38F7-FD33-4DCF-8752-45E31DD40AA9}
+		{9B6CCDF2-FEB3-4E5F-BF5A-509887DF7AC5} = {C29B5904-1251-4D15-AEEB-C1EC0D400566}
+		{79AEAA1B-E963-438A-BCA7-3864D1CE44C3} = {9B6CCDF2-FEB3-4E5F-BF5A-509887DF7AC5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D479CABC-5803-43D8-9BBD-8BFBE1B13531}
