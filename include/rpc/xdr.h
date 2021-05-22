@@ -118,6 +118,8 @@ enum xdr_op {
 	struct xdr_ops {
 		bool_t(*x_getlong)(struct XDRstruct*, long*);	/* get a long from underlying stream */
 		bool_t(*x_putlong)(struct XDRstruct *, long*);	/* put a long to " */
+		bool_t(*x_getlonglong)(struct XDRstruct*, long long*);	/* get a long from underlying stream */
+		bool_t(*x_putlonglong)(struct XDRstruct*, long long*);	/* put a long to " */
 		bool_t(*x_getbytes)(struct XDRstruct *, caddr_t, u_int);/* get some bytes from " */
 		bool_t(*x_putbytes)(struct XDRstruct *, caddr_t, u_int);/* put some bytes to " */
 		u_int(*x_getpostn)(struct XDRstruct *);/* returns bytes off from beginning */
@@ -155,10 +157,20 @@ enum xdr_op {
 #define xdr_getlong(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_getlong)(xdrs, longp)
 
+#define XDR_GETLONGLONG(xdrs, longlongp)			\
+	(*(xdrs)->x_ops->x_getlonglong)(xdrs, longlongp)
+#define xdr_getlonglong(xdrs, longp)			\
+	(*(xdrs)->x_ops->x_getlonglong)(xdrs, longlongp)
+
 #define XDR_PUTLONG(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_putlong)(xdrs, longp)
 #define xdr_putlong(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_putlong)(xdrs, longp)
+
+#define XDR_PUTLONGLONG(xdrs, longlongp)			\
+	(*(xdrs)->x_ops->x_putlonglong)(xdrs, longlongp)
+#define xdr_putlonglong(xdrs, longp)			\
+	(*(xdrs)->x_ops->x_putlonglong)(xdrs, longlongp)
 
 #define XDR_GETBYTES(xdrs, addr, len)			\
 	(*(xdrs)->x_ops->x_getbytes)(xdrs, addr, len)
@@ -263,6 +275,8 @@ MINI_XDR_EXPORT bool_t	xdr_int(XDR * xdrs, void* ipp, ...);
 MINI_XDR_EXPORT bool_t	xdr_u_int(XDR * xdrs, void* upp, ...);
 MINI_XDR_EXPORT bool_t	xdr_long(XDR * xdrs, void* lpp, ...);
 MINI_XDR_EXPORT bool_t	xdr_u_long __P((XDR * xdrs, void* ulpp, ...));
+MINI_XDR_EXPORT bool_t  xdr_longlong(XDR* xdrs, void* lpp, ...);
+MINI_XDR_EXPORT bool_t  xdr_u_longlong(XDR* xdrs, void* lpp, ...);
 #ifdef _WIN64
 MINI_XDR_EXPORT bool_t	xdr_long_as_ptrdiff_t(XDR * xdrs, void* lpp, ...);
 MINI_XDR_EXPORT bool_t	xdr_u_long_as_size_t(XDR * xdrs, void* ulpp, ...);

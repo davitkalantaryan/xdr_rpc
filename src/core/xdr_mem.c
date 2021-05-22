@@ -63,6 +63,8 @@ MINI_XDR_BEGIN_C_DECLS
 
 static bool_t	xdrmem_getlong(XDR*, register long*);
 static bool_t	xdrmem_putlong(XDR *, long*);
+static bool_t	xdrmem_getlonglong(XDR*, register long long*);
+static bool_t	xdrmem_putlonglong(XDR*, long long*);
 static bool_t	xdrmem_getbytes(XDR *, caddr_t, u_int);
 static bool_t	xdrmem_putbytes(XDR *, caddr_t, u_int);
 static u_int	xdrmem_getpos(XDR *);
@@ -73,6 +75,8 @@ static void	xdrmem_destroy(register XDR *);
 static struct	xdr_ops xdrmem_ops = {
 	xdrmem_getlong,
 	xdrmem_putlong,
+	xdrmem_getlonglong,
+	xdrmem_putlonglong,
 	xdrmem_getbytes,
 	xdrmem_putbytes,
 	xdrmem_getpos,
@@ -136,6 +140,29 @@ xdrmem_putlong(xdrs, lp)
 		return (FALSE);
 	*(long *)xdrs->x_private = (long)htonl((u_long)(*lp));
 	xdrs->x_private += sizeof(long);
+	return (TRUE);
+}
+
+
+static bool_t
+xdrmem_getlonglong(XDR* xdrs, register long long* lp)
+{
+
+	if ((xdrs->x_handy -= sizeof(long long)) < 0)
+		return (FALSE);
+	*lp = (long long)ntohll((unsigned long long)(*((long long*)(xdrs->x_private))));
+	xdrs->x_private += sizeof(long long);
+	return (TRUE);
+}
+
+static bool_t
+xdrmem_putlonglong(XDR* xdrs, long long* lp)
+{
+
+	if ((xdrs->x_handy -= sizeof(long long)) < 0)
+		return (FALSE);
+	*(long long*)xdrs->x_private = (long long)htonll((unsigned long long)(*lp));
+	xdrs->x_private += sizeof(long long);
 	return (TRUE);
 }
 
