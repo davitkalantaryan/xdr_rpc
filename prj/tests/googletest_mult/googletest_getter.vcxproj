@@ -30,7 +30,6 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{e6f8b6c2-4ca9-4b3a-9a00-83d011de88fa}</ProjectGuid>
     <RootNamespace>boostgetter</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <GoogleTestExtension Condition="'$(Configuration)'=='Debug'">d</GoogleTestExtension>
     <GoogleTestExtension Condition="'$(Configuration)'=='Release'">
     </GoogleTestExtension>
