@@ -202,13 +202,19 @@ static struct dbl_limits {
 
 #endif /* vax */
 
+#ifdef _WIN64
+//typedef long long long_in_use_t;
+typedef long long_in_use_t;
+#else
+typedef long long_in_use_t;
+#endif
 
 MINI_XDR_EXPORT
 bool_t
 xdr_double(XDR_RPC_REGISTER XDR * xdrs, void* dpp, ...)
 {
 	register double* dp = (double*)dpp;
-	register long *lp;
+	register long_in_use_t* lp;
 #if !defined(X86_AND_FRIENDS_DEFINED)
 	struct	ieee_double id;
 	struct	vax_double vd;
@@ -220,7 +226,7 @@ xdr_double(XDR_RPC_REGISTER XDR * xdrs, void* dpp, ...)
 
 	case XDR_ENCODE:
 #if defined(X86_AND_FRIENDS_DEFINED)
-		lp = (long *)dp;
+		lp = (long_in_use_t*)dp;
 #else
 		vd = *((struct vax_double *)dp);
 		for (i = 0, lim = dbl_limits;
@@ -247,15 +253,17 @@ xdr_double(XDR_RPC_REGISTER XDR * xdrs, void* dpp, ...)
 #if !defined(_WIN64)
 		return (XDR_PUTLONG(xdrs, lp+1) && XDR_PUTLONG(xdrs, lp));
 #else
-		return (XDR_PUTLONG(xdrs, lp++) && XDR_PUTLONG(xdrs, lp));
+		//return (XDR_PUTLONGLONG(xdrs, lp++) && XDR_PUTLONGLONG(xdrs, lp));
+		return (XDR_PUTLONG(xdrs, lp + 1) && XDR_PUTLONG(xdrs, lp));
 #endif
 	case XDR_DECODE:
 #if defined(X86_AND_FRIENDS_DEFINED)
-		lp = (long *)dp;
+		lp = (long_in_use_t*)dp;
 #if !defined(_WIN64)
 		return (XDR_GETLONG(xdrs, lp+1) && XDR_GETLONG(xdrs, lp));
 #else
-		return (XDR_GETLONG(xdrs, lp++) && XDR_GETLONG(xdrs, lp));
+		//return (XDR_GETLONGLONG(xdrs, lp++) && XDR_GETLONGLONG(xdrs, lp));
+		return (XDR_GETLONG(xdrs, lp + 1) && XDR_GETLONG(xdrs, lp));
 #endif
 #else
 		lp = (long *)&id;

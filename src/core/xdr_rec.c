@@ -82,6 +82,8 @@ static u_int	fix_buf_size(register u_int s);
 
 static bool_t	xdrrec_getlong(XDR *xdrs,register long *lp);
 static bool_t	xdrrec_putlong(XDR *xdrs,long *lp);
+static bool_t	xdrrec_getlonglong(XDR* xdrs, register long long* lp);
+static bool_t	xdrrec_putlonglong(XDR* xdrs, long long* lp);
 static bool_t	xdrrec_getbytes(XDR *xdrs,caddr_t addr,u_int len);
 static bool_t	xdrrec_putbytes(XDR *xdrs,caddr_t addr,u_int len);
 static u_int	xdrrec_getpos(XDR *xdrs);
@@ -93,6 +95,8 @@ static void	xdrrec_destroy(register XDR *xdrs);
 static struct  xdr_ops xdrrec_ops = {
 	xdrrec_getlong,
 	xdrrec_putlong,
+	xdrrec_getlonglong,
+	xdrrec_putlonglong,
 	xdrrec_getbytes,
 	xdrrec_putbytes,
 	xdrrec_getpos,
@@ -262,6 +266,52 @@ xdrrec_putlong(xdrs, lp)
 	*dest_lp = (long)htonl((u_long)(*lp));
 	return (TRUE);
 }
+
+
+// new api
+static bool_t
+xdrrec_getlonglong(XDR* xdrs, register long long* lp)
+{
+	register RECSTREAM* rstrm = (RECSTREAM*)(xdrs->x_private);
+	register long long* buflp = (long long*)(rstrm->in_finger);
+	long mylong;
+
+	/* first try the inline, fast case */
+	if ((rstrm->fbtbc >= sizeof(long long)) && (rstrm->in_boundry - (caddr_t)buflp) >= sizeof(long long)) {
+		*lp = (long long)ntohll((unsigned long long)(*buflp));
+		rstrm->fbtbc -= sizeof(long long);
+		rstrm->in_finger += sizeof(long long);
+	}
+	else {
+		if (!xdrrec_getbytes(xdrs, (caddr_t)&mylong, sizeof(long long)))
+			return (FALSE);
+		*lp = (long long)ntohll((unsigned long long)mylong);
+	}
+	return (TRUE);
+}
+
+static bool_t
+xdrrec_putlonglong(XDR* xdrs, long long* lp)
+{
+	register RECSTREAM* rstrm = (RECSTREAM*)(xdrs->x_private);
+	register long long* dest_lp = ((long long*)(rstrm->out_finger));
+
+	if ((rstrm->out_finger += sizeof(long long)) > rstrm->out_boundry) {
+		/*
+		 * this case should almost never happen so the code is
+		 * inefficient
+		 */
+		rstrm->out_finger -= sizeof(long long);
+		rstrm->frag_sent = TRUE;
+		if (!flush_out(rstrm, FALSE))
+			return (FALSE);
+		dest_lp = ((long long*)(rstrm->out_finger));
+		rstrm->out_finger += sizeof(long long);
+	}
+	*dest_lp = (long long)htonll((unsigned long long)(*lp));
+	return (TRUE);
+}
+
 
 static bool_t  /* must manage buffers, fragments, and records */
 xdrrec_getbytes(xdrs, addr, len)

@@ -123,11 +123,17 @@ xdr_int(XDR * xdrs, void* ipp, ...)
 	(void) (xdr_short(xdrs, (short *)ip));
 	return (xdr_long(xdrs, (long *)ip));
 #else
+
+#ifdef _WIN64
+	return (xdr_short(xdrs, ip));
+#else
+
 	if (sizeof (int) == sizeof (long)) {
 		return (xdr_long(xdrs,ip));
 	} else {
 		return (xdr_short(xdrs,ip));
 	}
+#endif
 #endif
 }
 
@@ -176,6 +182,29 @@ xdr_long(XDR * xdrs, void* lpp, ...)
 }
 
 
+/*
+ * XDR long integers
+ * same as xdr_u_long - open coded to save a proc call!
+ */
+MINI_XDR_EXPORT
+bool_t
+xdr_longlong(XDR* xdrs, void* lpp, ...)
+{
+	long long* lp = (long long*)lpp;
+
+	if (xdrs->x_op == XDR_ENCODE)
+		return (XDR_PUTLONGLONG(xdrs, lp));
+
+	if (xdrs->x_op == XDR_DECODE)
+		return XDR_GETLONGLONG(xdrs, lp);
+
+	if (xdrs->x_op == XDR_FREE)
+		return (TRUE);
+
+	return (FALSE);
+}
+
+
 MINI_XDR_EXPORT
 bool_t
 xdr_long_as_ptrdiff_t(XDR * xdrs, void* lpp, ...)
@@ -212,6 +241,21 @@ xdr_u_long(XDR * xdrs, void* ulpp, ...)
 		return (XDR_GETLONG(xdrs, (long*)ulp));
 	if (xdrs->x_op == XDR_ENCODE)
 		return (XDR_PUTLONG(xdrs, (long*)ulp));
+	if (xdrs->x_op == XDR_FREE)
+		return (TRUE);
+	return (FALSE);
+}
+
+
+MINI_XDR_EXPORT
+bool_t
+xdr_u_longlong (XDR* xdrs, void* ulpp, ...)
+{
+	unsigned long long* ulp = (unsigned long long*)ulpp;
+	if (xdrs->x_op == XDR_DECODE)
+		return (XDR_GETLONGLONG(xdrs, (long long*)ulp));
+	if (xdrs->x_op == XDR_ENCODE)
+		return (XDR_PUTLONGLONG(xdrs, (long long*)ulp));
 	if (xdrs->x_op == XDR_FREE)
 		return (TRUE);
 	return (FALSE);
