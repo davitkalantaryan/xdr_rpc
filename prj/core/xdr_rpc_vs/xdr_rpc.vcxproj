@@ -38,7 +38,6 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{7FEB9B36-9BD8-4B82-8731-8D12F1D82524}</ProjectGuid>
     <RootNamespace>doocsxdrrpc</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
