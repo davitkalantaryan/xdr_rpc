@@ -68,9 +68,10 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 
 
 #ifdef FD_SETSIZE
-static SVCXPRT **xports;
+static SVCXPRT **xports = NULL;
 #ifdef _WIN32
-static rpcsocket_t sizeof_xports = FD_SETSIZE;
+//static rpcsocket_t sizeof_xports = FD_SETSIZE;
+static rpcsocket_t sizeof_xports = 0;
 #endif
 #else
 #define NOFILE 32
@@ -108,19 +109,16 @@ xprt_register(xprt)
 	register rpcsocket_t sock = xprt->xp_sock;
 
 #ifdef FD_SETSIZE
-	if (xports == NULL) {
-		xports = (SVCXPRT **)
-			mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-	}
+	
 #ifdef _WIN32
 	while (sock >= sizeof_xports) {
-		SVCXPRT **old_xports;
-
-		old_xports = xports;
-		xports = (SVCXPRT **)
-			mem_alloc(2 * sizeof_xports * sizeof(SVCXPRT *));
-		memcpy(xports, old_xports, sizeof_xports * sizeof(SVCXPRT *));
-		sizeof_xports = 2 * sizeof_xports;
+		if (sizeof_xports) { sizeof_xports *= 2; }
+		else { sizeof_xports = 1; }
+		xports = (SVCXPRT **)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT *));
+		if (!xports) {
+			fprintf(stderr, "realloc returned null!\n");
+			exit(1);
+		}
 	}
 
 
@@ -131,6 +129,11 @@ xprt_register(xprt)
 		XDR_RPC_ERR("too many connections (%d), compilation constant FD_SETSIZE was only %d", (int)sock, FD_SETSIZE);
 	}
 #else
+
+	if (xports == NULL) {
+		xports = (SVCXPRT**)mem_alloc(FD_SETSIZE * sizeof(SVCXPRT*));
+	}
+
 	if (sock < _rpc_dtablesize()) {
 		xports[sock] = xprt;
 		FD_SET(sock, &svc_fdset);

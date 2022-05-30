@@ -167,14 +167,14 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 		(void)fprintf(stderr, "svcudp_create: out of memory\n");
 		return (NULL);
 	}
-	xdrmem_create(
-	    &(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
 	su->su_cache = NULL;
 	xprt->xp_p2 = (caddr_t)su;
 	xprt->xp_verf.oa_base = su->su_verfbody;
 	xprt->xp_ops = &svcudp_op;
 	xprt->xp_port = ntohs(addr.sin_port);
 	xprt->xp_sock = sock;
+	xprt->xp_addrlen = (int)sizeof(addr);
 	xprt_register(xprt);
 	return (xprt);
 }

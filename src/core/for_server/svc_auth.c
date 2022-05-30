@@ -80,7 +80,6 @@ static struct {
 #define	AUTH_MAX	2		/* HIGHEST AUTH NUMBER */
 
 struct opaque_auth _null_auth;
-fd_set svc_fdset;
 
 
 /*

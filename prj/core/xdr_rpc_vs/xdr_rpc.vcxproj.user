@@ -1,4 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <RemoteDebuggerCommand>C:\export\doocs\bin\rpc_bind.exe c</RemoteDebuggerCommand>
+    <RemoteDebuggerWorkingDirectory>C:\export\doocs\bin</RemoteDebuggerWorkingDirectory>
+    <RemoteDebuggerServerName>znpi06</RemoteDebuggerServerName>
+    <DebuggerFlavor>WindowsRemoteDebugger</DebuggerFlavor>
+    <RemoteDebuggerCommandArguments>
+    </RemoteDebuggerCommandArguments>
+    <RemoteDebuggerDebuggerType>NativeOnly</RemoteDebuggerDebuggerType>
+  </PropertyGroup>
 </Project>
