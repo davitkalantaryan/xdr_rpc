@@ -104,11 +104,14 @@ svc_run(void)
 
 		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
 		case -1:
-			if (WSAGetLastError() == EINTR) {
-				continue;
+			switch (WSAGetLastError()) {
+			case WSANOTINITIALISED: case WSAEFAULT:
+				perror("svc_run: - select failed");
+				return;
+			default:
+				break;
 			}
-			perror("svc_run: - select failed");
-			return;
+			continue;
 		case 0:
 			continue;
 		default:
