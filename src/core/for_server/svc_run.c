@@ -49,56 +49,69 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
  */
 
 #include <rpc/wrpc_first_com_include.h>
-#include <rpc.h>
+#include <rpc/svc.h>
 #ifdef _WIN32
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <Windows.h>
 #include <errno.h>
+typedef HANDLE	xdr_rpc_thread_t;
+#define _rpc_dtablesize(...)	0
 #else
 #include <sys/errno.h>
+#include <pthread.h>
+typedef pthread_t	xdr_rpc_thread_t;
 extern int errno;
+#define WSAGetLastError(...)	errno
+#define GetCurrentThread	pthread_self
 #endif
+
+static xdr_rpc_thread_t  s_svc_run_thread = NULL;
 static BOOL svc_run_stop;
-fd_set svc_fdset;
-void
-svc_getreqset(readfds);
+MINI_XDR_EXPORT fd_set svc_fdset;
+
+static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
+{
+	(void)a_parameter;
+}
+
 
 MINI_XDR_EXPORT
 void
 svc_run(void)
 {
-	struct timeval selectTimeout;
 #ifdef FD_SETSIZE
 	fd_set readfds;
 #else
-      int readfds;
+	int readfds;
 #endif /* def FD_SETSIZE */
 
+	s_svc_run_thread = GetCurrentThread();
+
+#ifdef _WIN32
+#else
+	sigaction(); // todo:
+#endif
+
 	svc_run_stop = TRUE;
-	selectTimeout.tv_sec = 10;
-	selectTimeout.tv_usec = 10;
-//	for (;;) {
+
 	while (svc_run_stop) {
 #ifdef FD_SETSIZE
 		readfds = svc_fdset;
 #else
 		readfds = svc_fds;
 #endif /* def FD_SETSIZE */
-#ifdef _WIN32
-		switch (select(0 /* unused in winsock */, &readfds, NULL, NULL,
-#else
-		switch (select(_rpc_dtablesize(), &readfds, (int *)0, (int *)0,
-#endif
-				//(struct timeval *)0)) {
-				&selectTimeout)) {
-			case -1:
-#ifdef _WIN32
-			if (WSAGetLastError() == EINTR) {
-#else
-			if (errno == EINTR) {
-#endif
-				continue;
+
+		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
+		case -1:
+			switch (WSAGetLastError()) {
+			case WSANOTINITIALISED: case WSAEFAULT:
+				perror("svc_run: - select failed");
+				return;
+			default:
+				break;
 			}
-			perror("svc_run: - select failed");
-			return;
+			continue;
 		case 0:
 			continue;
 		default:
@@ -112,6 +125,13 @@ MINI_XDR_EXPORT
 void
 svc_exit(void)
 {
+	xdr_rpc_thread_t thisThread = GetCurrentThread();
 	svc_run_stop = FALSE;
-	//if()
+	if (thisThread != s_svc_run_thread) {
+#ifdef _WIN32
+		QueueUserAPC(&InterruptFunction, s_svc_run_thread, 0);
+#else
+		pthread_kill();  // todo:
+#endif
+	}
 }

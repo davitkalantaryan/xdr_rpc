@@ -119,6 +119,8 @@ bool_t
 xdr_int(XDR * xdrs, void* ipp, ...)
 {
 	int *ip = (int *)ipp;
+	return (xdr_long(xdrs, ip));
+#if 0
 #ifdef lint
 	(void) (xdr_short(xdrs, (short *)ip));
 	return (xdr_long(xdrs, (long *)ip));
@@ -135,6 +137,7 @@ xdr_int(XDR * xdrs, void* ipp, ...)
 	}
 #endif
 #endif
+#endif  // #if 0
 }
 
 

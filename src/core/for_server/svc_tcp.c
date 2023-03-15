@@ -204,6 +204,7 @@ svctcp_create(sock, sendsize, recvsize)
 	xprt->xp_ops = &svctcp_rendezvous_op;
 	xprt->xp_port = ntohs(addr.sin_port);
 	xprt->xp_sock = sock;
+	xprt->xp_addrlen = (int)sizeof(struct sockaddr_in);
 	xprt_register(xprt);
 	return (xprt);
 }
@@ -286,6 +287,7 @@ rendezvous_request(SVCXPRT * xprt, struct rpc_msg *__msg)
 static enum xprt_stat
 rendezvous_stat(SVCXPRT *__xprt)
 {
+	(void)__xprt;
 	return (XPRT_IDLE);
 }
 

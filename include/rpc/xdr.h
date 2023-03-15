@@ -266,8 +266,8 @@ struct xdr_discrim {
 #ifndef __P
 #define __P(a)	a
 #endif
-#define	xdr_longlong_t		xdr_long
-#define	xdr_u_longlong_t	xdr_u_long
+#define	xdr_longlong_t		xdr_longlong
+#define	xdr_u_longlong_t	xdr_u_longlong
 
 
 MINI_XDR_EXPORT bool_t	xdr_void __P((XDR *__xdrs,void* uspp, ...));
