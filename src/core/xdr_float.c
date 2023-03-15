@@ -259,12 +259,7 @@ xdr_double(XDR_RPC_REGISTER XDR * xdrs, void* dpp, ...)
 	case XDR_DECODE:
 #if defined(X86_AND_FRIENDS_DEFINED)
 		lp = (long_in_use_t*)dp;
-#if !defined(_WIN64)
-		return (XDR_GETLONG(xdrs, lp+1) && XDR_GETLONG(xdrs, lp));
-#else
-		//return (XDR_GETLONGLONG(xdrs, lp++) && XDR_GETLONGLONG(xdrs, lp));
 		return (XDR_GETLONG(xdrs, lp + 1) && XDR_GETLONG(xdrs, lp));
-#endif
 #else
 		lp = (long *)&id;
 		if (!XDR_GETLONG(xdrs, lp++) || !XDR_GETLONG(xdrs, lp))
