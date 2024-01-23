@@ -108,7 +108,7 @@ void xprt_register(SVCXPRT* xprt)
 		if (sizeof_xports) { sizeof_xports *= 2; }
 		else { sizeof_xports = 1; }
 		xportsTmp = (SVCXPRT**)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT*));
-		if (!xports) {
+		if (!xportsTmp) {
 			fprintf(stderr, "realloc returned null!\n");
 			exit(1);
 		}
