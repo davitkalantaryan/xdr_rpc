@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/svc.h>
+#include "xdr_rpc_debug.h"
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -57,6 +58,7 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 #include <errno.h>
 typedef HANDLE	xdr_rpc_thread_t;
 #define _rpc_dtablesize(...)	0
+#define MyPoll WSAPoll
 #else
 #include <sys/errno.h>
 #include <pthread.h>
@@ -64,11 +66,18 @@ typedef pthread_t	xdr_rpc_thread_t;
 extern int errno;
 #define WSAGetLastError(...)	errno
 #define GetCurrentThread	pthread_self
+#define MyPoll poll
 #endif
+
+//MINI_XDR_EXPORT fd_set svc_fdset;
 
 static xdr_rpc_thread_t  s_svc_run_thread = NULL;
 static BOOL svc_run_stop;
-MINI_XDR_EXPORT fd_set svc_fdset;
+
+int svc_max_pollfd = 0;
+struct pollfd* svc_pollfd = NULL;
+
+void svc_getreq_poll(struct pollfd* pfdp, int pollretval);
 
 static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
 {
@@ -76,56 +85,80 @@ static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
 }
 
 
-MINI_XDR_EXPORT
-void
-svc_run(void)
+MINI_XDR_EXPORT void svc_run(void)
 {
-#ifdef FD_SETSIZE
-	fd_set readfds;
-#else
-	int readfds;
-#endif /* def FD_SETSIZE */
+	int i;
+	struct pollfd* my_pollfd = NULL;
+	int last_max_pollfd = 0;
 
-	s_svc_run_thread = GetCurrentThread();
+	s_svc_run_thread = GetCurrentThread(); // In case of unix GetCurrentThread == pthread_self
 
-#ifdef _WIN32
-#else
+#ifndef _WIN32
 	sigaction(); // todo:
 #endif
 
 	svc_run_stop = TRUE;
 
 	while (svc_run_stop) {
-#ifdef FD_SETSIZE
-		readfds = svc_fdset;
-#else
-		readfds = svc_fds;
-#endif /* def FD_SETSIZE */
+		//readfds = svc_fdset;
+		//
+		//switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
+		//case -1:
+		//	switch (WSAGetLastError()) {
+		//	case WSANOTINITIALISED: case WSAEFAULT:
+		//		perror("svc_run: - select failed");
+		//		return;
+		//	default:
+		//		break;
+		//	}
+		//	continue;
+		//case 0:
+		//	continue;
+		//default:
+		//	svc_getreqset(&readfds);
+		//}
 
-		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
-		case -1:
-			switch (WSAGetLastError()) {
-			case WSANOTINITIALISED: case WSAEFAULT:
-				perror("svc_run: - select failed");
-				return;
-			default:
+		int max_pollfd = svc_max_pollfd;
+
+		if (max_pollfd == 0) { break; }
+
+		if (last_max_pollfd != max_pollfd){
+			struct pollfd* new_pollfd = realloc(my_pollfd, sizeof(struct pollfd) * max_pollfd);
+
+			if (new_pollfd == NULL){
+				XDR_RPC_ERR("svc_run: - out of memory");
 				break;
 			}
-			continue;
+
+			my_pollfd = new_pollfd;
+			last_max_pollfd = max_pollfd;
+		}
+
+
+		i = MyPoll(my_pollfd, max_pollfd, -1);
+
+		switch (i){
+		case -1:
+			if (errno == EINTR)
+				continue;
+			XDR_RPC_ERR("svc_run: - poll failed. RPC run will be exited");
+			break;
 		case 0:
 			continue;
 		default:
-			svc_getreqset(&readfds);
-		}
-	}
+			svc_getreq_poll(my_pollfd, i);
+			continue;
+		}  //  switch (i){
+
+		break;
+
+	}  //  while (svc_run_stop) {
 }
 
 
-MINI_XDR_EXPORT
-void
-svc_exit(void)
+MINI_XDR_EXPORT void svc_exit(void)
 {
-	xdr_rpc_thread_t thisThread = GetCurrentThread();
+	xdr_rpc_thread_t thisThread = GetCurrentThread(); // In case of unix GetCurrentThread == pthread_self
 	svc_run_stop = FALSE;
 	if (thisThread != s_svc_run_thread) {
 #ifdef _WIN32

@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
  */
 
 #include <rpc/wrpc_first_com_include.h>
+#include <cinternal/internal_header.h>
 #ifdef _WIN32
 #include "rpc/pmap_clnt.h"
 #include <stdio.h>
@@ -62,22 +63,17 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 #include <rpc/pmap_clnt.h>
 #include <errno.h>
 #endif
+#include <assert.h>
 #include "xdr_rpc_debug.h"
 #include "rpc/svc.h"
 #include "rpc/svc_auth.h"
 
 
-#ifdef FD_SETSIZE
-static SVCXPRT **xports = NULL;
-#ifdef _WIN32
-//static rpcsocket_t sizeof_xports = FD_SETSIZE;
+static SVCXPRT** xports = NULL;
 static rpcsocket_t sizeof_xports = 0;
-#endif
-#else
-#define NOFILE 32
 
-static SVCXPRT *xports[NOFILE];
-#endif /* def FD_SETSIZE */
+extern int svc_max_pollfd;
+extern struct pollfd* svc_pollfd;
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
@@ -95,85 +91,79 @@ static struct svc_callout {
 	void		    (*sc_dispatch)();
 } *svc_head;
 
-static struct svc_callout *svc_find();
+static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout** prev);
 
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
  * Activate a transport handle.
  */
-void
-xprt_register(xprt)
-	SVCXPRT *xprt;
+void xprt_register(SVCXPRT* xprt)
 {
+	struct pollfd* new_svc_pollfd;
+	int i;
 	register rpcsocket_t sock = xprt->xp_sock;
-
-#ifdef FD_SETSIZE
-	
-#ifdef _WIN32
 	while (sock >= sizeof_xports) {
+		SVCXPRT** xportsTmp;
 		if (sizeof_xports) { sizeof_xports *= 2; }
 		else { sizeof_xports = 1; }
-		xports = (SVCXPRT **)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT *));
+		xportsTmp = (SVCXPRT**)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT*));
 		if (!xports) {
 			fprintf(stderr, "realloc returned null!\n");
 			exit(1);
 		}
+		xports = xportsTmp;
 	}
 
+	// below lines will be deleted
+	//if (svc_fdset.fd_count < FD_SETSIZE) {
+	//	xports[sock] = xprt;
+	//	FD_SET(sock, &svc_fdset);
+	//}
+	//else {
+	//	XDR_RPC_ERR("too many connections (%d), compilation constant FD_SETSIZE was only %d", (int)sock, FD_SETSIZE);
+	//}
+	// end -> Below lines will be deleted
 
-	if (svc_fdset.fd_count < FD_SETSIZE) {
-		xports[sock] = xprt;
-		FD_SET(sock, &svc_fdset);
-	} else {		
-		XDR_RPC_ERR("too many connections (%d), compilation constant FD_SETSIZE was only %d", (int)sock, FD_SETSIZE);
-	}
-#else
+	xports[sock] = xprt;
 
-	if (xports == NULL) {
-		xports = (SVCXPRT**)mem_alloc(FD_SETSIZE * sizeof(SVCXPRT*));
+	/* Check if we have an empty slot */
+	for (i = 0; i < svc_max_pollfd; ++i) {
+		if (svc_pollfd[i].fd == -1){
+			svc_pollfd[i].fd = sock;
+			svc_pollfd[i].events = (POLLIN | POLLPRI |POLLRDNORM | POLLRDBAND);
+			return;
+		}
 	}
 
-	if (sock < _rpc_dtablesize()) {
-		xports[sock] = xprt;
-		FD_SET(sock, &svc_fdset);
-	}
-#endif
-#else
-	if (sock < NOFILE) {
-		xports[sock] = xprt;
-		svc_fds |= (1 << sock);
-	}
-#endif /* def FD_SETSIZE */
+	new_svc_pollfd = (struct pollfd*)realloc(svc_pollfd,sizeof(struct pollfd)*(svc_max_pollfd + 1));
+	if (new_svc_pollfd == NULL) /* Out of memory */
+		return;
+	svc_pollfd = new_svc_pollfd;
 
+	svc_pollfd[svc_max_pollfd].fd = sock;
+	svc_pollfd[svc_max_pollfd].events = (POLLIN | POLLPRI |POLLRDNORM | POLLRDBAND);
+	++svc_max_pollfd;
 }
 
 /*
  * De-activate a transport handle. 
  */
-void
-xprt_unregister(xprt) 
-	SVCXPRT *xprt;
-{ 
+void xprt_unregister(SVCXPRT* xprt)
+{
+	int i;
 	register rpcsocket_t sock = xprt->xp_sock;
 
-#ifdef FD_SETSIZE
-#ifdef _WIN32
-	if ((xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		FD_CLR((unsigned)sock, &svc_fdset);
-#else
-	if ((sock < _rpc_dtablesize()) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		FD_CLR(sock, &svc_fdset);
-#endif
+	//if ((sock < sizeof_xports) && (xports[sock] == xprt)) {
+	//	xports[sock] = (SVCXPRT*)0;
+	//	FD_CLR((unsigned)sock, &svc_fdset);
+	//}
+
+	for (i = 0; i < svc_max_pollfd; ++i) {
+		if (svc_pollfd[i].fd == sock) {
+			svc_pollfd[i].fd = -1;
+		}
 	}
-#else
-	if ((sock < NOFILE) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		svc_fds &= ~(1 << sock);
-	}
-#endif /* def FD_SETSIZE */
 }
 
 
@@ -246,10 +236,7 @@ svc_unregister(prog, vers)
  * struct.
  */
 static struct svc_callout *
-svc_find(prog, vers, prev)
-	u_long prog;
-	u_long vers;
-	struct svc_callout **prev;
+svc_find(u_long prog, u_long vers, struct svc_callout**  prev)
 {
 	register struct svc_callout *s, *p;
 
@@ -416,13 +403,10 @@ svcerr_progvers(xprt, low_vers, high_vers)
  * is mallocated in kernel land.
  */
 
-void
-svc_getreq(rdfds)
-	int rdfds;
+void svc_getreq(int rdfds)
 {
-#ifdef FD_SETSIZE
 #ifdef _WIN32
-int i;
+	int i;
 #endif
 	fd_set readfds;
 
@@ -440,30 +424,31 @@ int i;
 	readfds.fds_bits[0] = rdfds;
 #endif
 	svc_getreqset(&readfds);
-#else
-	int readfds = rdfds & svc_fds;
-
-	svc_getreqset(&readfds);
-#endif /* def FD_SETSIZE */
 }
 
-void
-svc_getreqset(readfds)
-#ifdef FD_SETSIZE
-	fd_set *readfds;
-{
+
+static void svc_getreq_common(int a_fd);
+
+
+static inline SVCXPRT* FdToXprtInline(int a_fd) {
+	SVCXPRT* xprt;
+#ifdef _WIN32
+	assert(a_fd < ((int)sizeof_xports));
+	/* sock has input waiting */
+	xprt = xports[a_fd];
 #else
-	int *readfds;
+	//for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
+	//	/* sock has input waiting */
+	//	xprt = xports[sock + bit - 1];
+	//}
+	xprt = xports[a_fd];
+#endif
+	return xprt;
+}
+
+
+void svc_getreqset(fd_set* readfds)
 {
-    int readfds_local = *readfds;
-#endif /* def FD_SETSIZE */
-	enum xprt_stat stat;
-	struct rpc_msg msg;
-	int prog_found;
-	u_long low_vers;
-	u_long high_vers;
-	struct svc_req r;
-	register SVCXPRT *xprt;
 #ifndef _WIN32
 	register u_long mask;
 	register int bit;
@@ -471,85 +456,134 @@ svc_getreqset(readfds)
 	register int setsize;
 #endif
 	register int sock;
-	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	u_int i;
+
+#ifdef _WIN32
+	/* Loop through the sockets that have input ready */
+	for (i = 0; i < readfds->fd_count; i++) {
+		sock = (int)readfds->fd_array[i];
+		svc_getreq_common(sock);
+#else
+	// todo:
+	//setsize = _rpc_dtablesize();
+	//maskp = (u_long*)readfds->fds_bits;
+	//for (sock = 0; sock < setsize; sock += NFDBITS) {
+	//	for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
+	//		/* sock has input waiting */
+	//		xprt = xports[sock + bit - 1];
+#endif
+
+	}
+}
+
+
+void svc_getreq_poll(struct pollfd* pfdp, int pollretval)
+{
+	int i;
+	register int fds_found;
+
+	if (pollretval < 1)
+		return;
+
+	for (i = fds_found = 0; i < svc_max_pollfd; ++i) {
+		register struct pollfd* p = &pfdp[i];
+
+		if (p->fd != -1 && p->revents) {
+			/* fd has input waiting */
+			if (p->revents & POLLNVAL)
+				xprt_unregister(xports[p->fd]);
+			else
+				svc_getreq_common(p->fd);
+
+			if (++fds_found >= pollretval)
+				break;
+		}
+	}  //  for (i = fds_found = 0; i < svc_max_pollfd; ++i){
+}
+
+
+static void svc_getreq_common(int a_fd)
+{
+	register SVCXPRT* const xprt = FdToXprtInline(a_fd);
+	enum xprt_stat stat;
+	struct rpc_msg msg;
+	int prog_found;
+	u_long low_vers;
+	u_long high_vers;
+	struct svc_req r;
+	char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
+
+	if (!xprt) {
+		XDR_RPC_ERR("xprt(fd=%d)=NULL",a_fd);
+		return;
+	}
 
 	msg.rm_call.cb_cred.oa_base = cred_area;
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
-	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
+	r.rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
-#ifdef FD_SETSIZE
-#ifdef _WIN32
-	/* Loop through the sockets that have input ready */
-	for ( i=0; i<readfds->fd_count; i++ ) {
-		sock = (int)readfds->fd_array[i];
-		/* sock has input waiting */
-		xprt = xports[sock];
-#else
-	setsize = _rpc_dtablesize();	
-	maskp = (u_long *)readfds->fds_bits;
-	for (sock = 0; sock < setsize; sock += NFDBITS) {
-	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
-		/* sock has input waiting */
-		xprt = xports[sock + bit - 1];
-#endif
-#else
-	for (sock = 0; readfds_local != 0; sock++, readfds_local >>= 1) {
-	    if ((readfds_local & 1) != 0) {
-		/* sock has input waiting */
-		xprt = xports[sock];
-#endif /* def FD_SETSIZE */
-		/* now receive msgs from xprtprt (support batch calls) */
-		do {
-			if (SVC_RECV(xprt, &msg)) {
+	/* now receive msgs from xprtprt (support batch calls) */
+	do {
+		if (SVC_RECV(xprt, &msg)) {
 
-				/* now find the exported program and call it */
-				register struct svc_callout *s;
-				enum auth_stat why;
+			/* now find the exported program and call it */
+			register struct svc_callout* s;
+			enum auth_stat why;
 
-				r.rq_xprt = xprt;
-				r.rq_prog = msg.rm_call.cb_prog;
-				r.rq_vers = msg.rm_call.cb_vers;
-				r.rq_proc = msg.rm_call.cb_proc;
-				r.rq_cred = msg.rm_call.cb_cred;
-				/* first authenticate the message */
-				if ((why= _authenticate(&r, &msg)) != AUTH_OK) {
-					svcerr_auth(xprt, why);
-					goto call_done;
-				}
-				/* now match message with a registered service*/
-				prog_found = FALSE;
-				low_vers = 0 - 1;
-				high_vers = 0;
-				for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
-					if (s->sc_prog == r.rq_prog) {
-						if (s->sc_vers == r.rq_vers) {
-							(*s->sc_dispatch)(&r, xprt);
-							goto call_done;
-						}  /* found correct version */
-						prog_found = TRUE;
-						if (s->sc_vers < low_vers)
-							low_vers = s->sc_vers;
-						if (s->sc_vers > high_vers)
-							high_vers = s->sc_vers;
-					}   /* found correct program */
-				}
-				/*
-				 * if we got here, the program or version
-				 * is not served ...
-				 */
-				if (prog_found)
-					svcerr_progvers(xprt,
-					low_vers, high_vers);
-				else
-					 svcerr_noprog(xprt);
-				/* Fall through to ... */
+			r.rq_xprt = xprt;
+			r.rq_prog = msg.rm_call.cb_prog;
+			r.rq_vers = msg.rm_call.cb_vers;
+			r.rq_proc = msg.rm_call.cb_proc;
+			r.rq_cred = msg.rm_call.cb_cred;
+			/* first authenticate the message */
+			if ((why = _authenticate(&r, &msg)) != AUTH_OK) {
+				svcerr_auth(xprt, why);
+				goto call_done;
 			}
-		call_done:
-			if ((stat = SVC_STAT(xprt)) == XPRT_DIED){
-				SVC_DESTROY(xprt);
-				break;
+			/* now match message with a registered service*/
+			prog_found = FALSE;
+			low_vers = 0 - 1;
+			high_vers = 0;
+			for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+				if (s->sc_prog == r.rq_prog) {
+					if (s->sc_vers == r.rq_vers) {
+						(*s->sc_dispatch)(&r, xprt);
+						goto call_done;
+					}  /* found correct version */
+					prog_found = TRUE;
+					if (s->sc_vers < low_vers)
+						low_vers = s->sc_vers;
+					if (s->sc_vers > high_vers)
+						high_vers = s->sc_vers;
+				}   /* found correct program */
 			}
-		} while (stat == XPRT_MOREREQS);
-	}
+			/*
+			 * if we got here, the program or version
+			 * is not served ...
+			 */
+			if (prog_found)
+				svcerr_progvers(xprt,low_vers, high_vers);
+			else
+				svcerr_noprog(xprt);
+			/* Fall through to ... */
+		}
+	call_done:
+		if ((stat = SVC_STAT(xprt)) == XPRT_DIED) {
+			SVC_DESTROY(xprt);
+			break;
+		}
+	} while (stat == XPRT_MOREREQS);
 }
+
+
+CPPUTILS_C_CODE_INITIALIZER(xdr_rpc_svc_c) {
+	svc_pollfd = (struct pollfd*)malloc(sizeof(struct pollfd*));
+	if (!svc_pollfd) {
+		exit(1);
+	}
+	svc_max_pollfd = 1;
+	svc_pollfd[0].fd = -1;
+	svc_pollfd[0].events = 0;
+	svc_pollfd[0].revents = 0;
+}
+

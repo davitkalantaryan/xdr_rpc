@@ -252,12 +252,9 @@ MINI_XDR_EXPORT void	svcerr_systemerr __P((SVCXPRT *__xprt));
  * Global keeper of rpc service descriptors in use
  * dynamic; must be inspected before each call to select
  */
-#ifdef FD_SETSIZE
-extern MINI_XDR_EXPORT fd_set svc_fdset;
-#define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
-#else
-extern MINI_XDR_EXPORT int svc_fds;
-#endif /* def FD_SETSIZE */
+
+//extern MINI_XDR_EXPORT fd_set svc_fdset;
+//#define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
 
 /*
  * a small program implemented by the svc_rpc implementation itself;
