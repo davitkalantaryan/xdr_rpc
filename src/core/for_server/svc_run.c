@@ -134,6 +134,7 @@ MINI_XDR_EXPORT void svc_run(void)
 			last_max_pollfd = max_pollfd;
 		}
 
+		memcpy(my_pollfd, svc_pollfd, max_pollfd * sizeof(struct pollfd));
 
 		i = MyPoll(my_pollfd, max_pollfd, -1);
 
