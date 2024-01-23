@@ -493,7 +493,7 @@ void svc_getreq_poll(struct pollfd* pfdp, int pollretval)
 			if (p->revents & POLLNVAL)
 				xprt_unregister(xports[p->fd]);
 			else
-				svc_getreq_common(p->fd);
+				svc_getreq_common((int)p->fd);
 
 			if (++fds_found >= pollretval)
 				break;
