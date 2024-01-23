@@ -2,8 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <DoocsVersion>20.2.0.01</DoocsVersion>
-    <MiniXdrRpcVersion>3.1.0</MiniXdrRpcVersion>
+    <MiniXdrRpcVersion>4.0.1</MiniXdrRpcVersion>
     <XdrRpcConfigurationExtension Condition="'$(Configuration)'=='Debug'">d</XdrRpcConfigurationExtension>
     <XdrRpcConfigurationExtension Condition="'$(Configuration)'=='Release'">r</XdrRpcConfigurationExtension>
     <XdrRpcFullVersion>$(MiniXdrRpcVersion)-$(PlatformTarget)-e$(XdrRpcConfigurationExtension)</XdrRpcFullVersion>
@@ -29,10 +28,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <BuildMacro Include="DoocsVersion">
-      <Value>$(DoocsVersion)</Value>
-      <EnvironmentVariable>true</EnvironmentVariable>
-    </BuildMacro>
     <BuildMacro Include="MiniXdrRpcVersion">
       <Value>$(MiniXdrRpcVersion)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
