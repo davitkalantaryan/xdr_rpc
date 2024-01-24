@@ -315,6 +315,7 @@
     <ClInclude Include="..\..\..\include\rpc\xdr_rpc_internal.h" />
     <ClInclude Include="..\..\..\src\core\include\mini_xdr_rpc_src_private.h" />
     <ClInclude Include="..\..\..\src\core\include\xdr_rpc_debug.h" />
+    <ClInclude Include="..\..\..\src\core\include\xdr_rpc_priv_lists.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\.gitignore" />

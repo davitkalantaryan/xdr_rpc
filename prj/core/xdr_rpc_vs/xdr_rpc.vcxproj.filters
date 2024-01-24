@@ -173,6 +173,9 @@
     <ClInclude Include="..\..\..\include\rpc\doocs_rpc_unix_like_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\core\include\xdr_rpc_priv_lists.h">
+      <Filter>Source Files\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\build_lib.bat">
