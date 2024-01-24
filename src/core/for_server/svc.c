@@ -133,6 +133,14 @@ static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
 }
 
 
+static inline void RemoveXportFromHashInline(SVCXPRT* a_xprt) {
+	register rpcsocket_t sock = a_xprt->xp_sock;
+	if ((sock < SizeOfHashMap) && (xports[sock] == a_xprt)) {
+		xports[sock] = (SVCXPRT*)0;
+	}
+}
+
+
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
@@ -158,10 +166,8 @@ void xprt_register(SVCXPRT* xprt)
 void xprt_unregister(SVCXPRT* xprt)
 { 
 	register rpcsocket_t sock = xprt->xp_sock;
-	if ((sock < SizeOfHashMap) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT*)0;
-		FD_CLR(sock, &svc_fdset);
-	}
+	RemoveXportFromHashInline(xprt);
+	FD_CLR(sock, &svc_fdset);
 }
 
 
