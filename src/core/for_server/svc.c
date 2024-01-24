@@ -66,18 +66,11 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 #include "rpc/svc.h"
 #include "rpc/svc_auth.h"
 
-
-#ifdef FD_SETSIZE
-static SVCXPRT **xports = NULL;
+static SVCXPRT** xports = NULL;
 #ifdef _WIN32
 //static rpcsocket_t sizeof_xports = FD_SETSIZE;
 static rpcsocket_t sizeof_xports = 0;
 #endif
-#else
-#define NOFILE 32
-
-static SVCXPRT *xports[NOFILE];
-#endif /* def FD_SETSIZE */
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
@@ -107,8 +100,6 @@ xprt_register(xprt)
 	SVCXPRT *xprt;
 {
 	register rpcsocket_t sock = xprt->xp_sock;
-
-#ifdef FD_SETSIZE
 	
 #ifdef _WIN32
 	while (sock >= sizeof_xports) {
@@ -139,13 +130,6 @@ xprt_register(xprt)
 		FD_SET(sock, &svc_fdset);
 	}
 #endif
-#else
-	if (sock < NOFILE) {
-		xports[sock] = xprt;
-		svc_fds |= (1 << sock);
-	}
-#endif /* def FD_SETSIZE */
-
 }
 
 /*
@@ -156,24 +140,16 @@ xprt_unregister(xprt)
 	SVCXPRT *xprt;
 { 
 	register rpcsocket_t sock = xprt->xp_sock;
-
-#ifdef FD_SETSIZE
 #ifdef _WIN32
-	if ((xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
+	if ((sock < sizeof_xports) && (xports[sock] == xprt)) {
+		xports[sock] = (SVCXPRT*)0;
 		FD_CLR((unsigned)sock, &svc_fdset);
 #else
 	if ((sock < _rpc_dtablesize()) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
+		xports[sock] = (SVCXPRT*)0;
 		FD_CLR(sock, &svc_fdset);
 #endif
 	}
-#else
-	if ((sock < NOFILE) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		svc_fds &= ~(1 << sock);
-	}
-#endif /* def FD_SETSIZE */
 }
 
 
@@ -416,13 +392,10 @@ svcerr_progvers(xprt, low_vers, high_vers)
  * is mallocated in kernel land.
  */
 
-void
-svc_getreq(rdfds)
-	int rdfds;
+void svc_getreq(int rdfds)
 {
-#ifdef FD_SETSIZE
 #ifdef _WIN32
-int i;
+	int i;
 #endif
 	fd_set readfds;
 
@@ -440,23 +413,10 @@ int i;
 	readfds.fds_bits[0] = rdfds;
 #endif
 	svc_getreqset(&readfds);
-#else
-	int readfds = rdfds & svc_fds;
-
-	svc_getreqset(&readfds);
-#endif /* def FD_SETSIZE */
 }
 
-void
-svc_getreqset(readfds)
-#ifdef FD_SETSIZE
-	fd_set *readfds;
+void svc_getreqset(fd_set* readfds)
 {
-#else
-	int *readfds;
-{
-    int readfds_local = *readfds;
-#endif /* def FD_SETSIZE */
 	enum xprt_stat stat;
 	struct rpc_msg msg;
 	int prog_found;
@@ -478,27 +438,21 @@ svc_getreqset(readfds)
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
-#ifdef FD_SETSIZE
 #ifdef _WIN32
 	/* Loop through the sockets that have input ready */
-	for ( i=0; i<readfds->fd_count; i++ ) {
+	for (i = 0; i < readfds->fd_count; i++) {
 		sock = (int)readfds->fd_array[i];
 		/* sock has input waiting */
 		xprt = xports[sock];
 #else
-	setsize = _rpc_dtablesize();	
-	maskp = (u_long *)readfds->fds_bits;
+	setsize = _rpc_dtablesize();
+	maskp = (u_long*)readfds->fds_bits;
 	for (sock = 0; sock < setsize; sock += NFDBITS) {
-	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
-		/* sock has input waiting */
-		xprt = xports[sock + bit - 1];
+		for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
+			/* sock has input waiting */
+			xprt = xports[sock + bit - 1];
 #endif
-#else
-	for (sock = 0; readfds_local != 0; sock++, readfds_local >>= 1) {
-	    if ((readfds_local & 1) != 0) {
-		/* sock has input waiting */
-		xprt = xports[sock];
-#endif /* def FD_SETSIZE */
+
 		/* now receive msgs from xprtprt (support batch calls) */
 		do {
 			if (SVC_RECV(xprt, &msg)) {

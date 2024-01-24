@@ -80,11 +80,7 @@ MINI_XDR_EXPORT
 void
 svc_run(void)
 {
-#ifdef FD_SETSIZE
 	fd_set readfds;
-#else
-	int readfds;
-#endif /* def FD_SETSIZE */
 
 	s_svc_run_thread = GetCurrentThread();
 
@@ -96,11 +92,7 @@ svc_run(void)
 	svc_run_stop = TRUE;
 
 	while (svc_run_stop) {
-#ifdef FD_SETSIZE
 		readfds = svc_fdset;
-#else
-		readfds = svc_fds;
-#endif /* def FD_SETSIZE */
 
 		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
 		case -1:
