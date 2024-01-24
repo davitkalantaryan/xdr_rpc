@@ -85,9 +85,11 @@ static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
 }
 
 
+static int MakeMultiplex(void);
+
+
 MINI_XDR_EXPORT void svc_run(void)
 {
-	int i;
 	struct pollfd* my_pollfd = NULL;
 	int last_max_pollfd = 0;
 
@@ -118,40 +120,9 @@ MINI_XDR_EXPORT void svc_run(void)
 		//	svc_getreqset(&readfds);
 		//}
 
-		int max_pollfd = svc_max_pollfd;
-
-		if (max_pollfd == 0) { break; }
-
-		if (last_max_pollfd != max_pollfd){
-			struct pollfd* new_pollfd = realloc(my_pollfd, sizeof(struct pollfd) * max_pollfd);
-
-			if (new_pollfd == NULL){
-				XDR_RPC_ERR("svc_run: - out of memory");
-				break;
-			}
-
-			my_pollfd = new_pollfd;
-			last_max_pollfd = max_pollfd;
-		}
-
-		memcpy(my_pollfd, svc_pollfd, max_pollfd * sizeof(struct pollfd));
-
-		i = MyPoll(my_pollfd, max_pollfd, -1);
-
-		switch (i){
-		case -1:
-			if (errno == EINTR)
-				continue;
-			XDR_RPC_ERR("svc_run: - poll failed. RPC run will be exited");
+		if (MakeMultiplex(&my_pollfd, &last_max_pollfd)) {
 			break;
-		case 0:
-			continue;
-		default:
-			svc_getreq_poll(my_pollfd, i);
-			continue;
-		}  //  switch (i){
-
-		break;
+		}
 
 	}  //  while (svc_run_stop) {
 }
@@ -168,4 +139,52 @@ MINI_XDR_EXPORT void svc_exit(void)
 		pthread_kill();  // todo:
 #endif
 	}
+}
+
+
+static int MakeMultiplex(struct pollfd** a_my_pollfd_p, int* a_last_max_pollfd_p)
+{
+	int i;
+	int max_pollfd = svc_max_pollfd;
+
+	if (max_pollfd == 0) { return 1; }
+
+	if ((*a_last_max_pollfd_p) != max_pollfd) {
+		struct pollfd* new_pollfd = realloc(*a_my_pollfd_p, sizeof(struct pollfd) * max_pollfd);
+
+		if (new_pollfd == NULL) {
+			XDR_RPC_ERR("svc_run: - out of memory");
+			return 1;
+		}
+
+		*a_my_pollfd_p = new_pollfd;
+		*a_last_max_pollfd_p = max_pollfd;
+	}
+
+	memcpy(*a_my_pollfd_p, svc_pollfd, max_pollfd * sizeof(struct pollfd));
+
+	i = MyPoll(*a_my_pollfd_p, max_pollfd, -1);
+
+	switch (i) {
+	case -1:
+		if (errno == EINTR)
+			return 0;
+		switch (WSAGetLastError()) {
+		case WSANOTINITIALISED: case WSAEFAULT:
+			XDR_RPC_ERR("svc_run: - poll failed. RPC run will be exited");
+			return 1;
+		default:
+			SleepEx(10, TRUE);
+			return 0;
+		}
+		//XDR_RPC_ERR("svc_run: - poll failed. RPC run will be exited");
+		//return 1;
+	case 0:
+		return 0;
+	default:
+		svc_getreq_poll(*a_my_pollfd_p, i);
+		return 0;
+	}  //  switch (i){
+
+	return 1;
 }

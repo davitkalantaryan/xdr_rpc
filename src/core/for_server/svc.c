@@ -95,6 +95,23 @@ static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout
 
 /* ***************  SVCXPRT related stuff **************** */
 
+#if 1
+#define my_realloc(_ptr, _newSize, _oldSize)	realloc(_ptr, _newSize)
+#else
+static inline void* my_realloc(void* a_ptr, size_t a_newSize, size_t a_oldSize) {
+	void* const retBuff = malloc(a_newSize);
+	if (retBuff) {
+		const size_t cunCopySize = (a_newSize > a_oldSize) ? a_oldSize : a_newSize;
+		memcpy(retBuff, a_ptr, cunCopySize);
+		free(a_ptr);
+		return retBuff;
+	}
+	return NULL;
+}
+#endif
+
+
+
 /*
  * Activate a transport handle.
  */
@@ -132,17 +149,21 @@ void xprt_register(SVCXPRT* xprt)
 		if (svc_pollfd[i].fd == -1){
 			svc_pollfd[i].fd = sock;
 			svc_pollfd[i].events = (POLLIN | POLLPRI |POLLRDNORM | POLLRDBAND);
+			svc_pollfd[i].revents = 0;
 			return;
 		}
 	}
 
-	new_svc_pollfd = (struct pollfd*)realloc(svc_pollfd,sizeof(struct pollfd)*(svc_max_pollfd + 1));
+	//new_svc_pollfd = (struct pollfd*)realloc(svc_pollfd,sizeof(struct pollfd)*(svc_max_pollfd + 1));
+	//new_svc_pollfd = (struct pollfd*)realloc(svc_pollfd, 4096);
+	new_svc_pollfd = (struct pollfd*)my_realloc(svc_pollfd, sizeof(struct pollfd) * (svc_max_pollfd + 1), sizeof(struct pollfd) * svc_max_pollfd);
 	if (new_svc_pollfd == NULL) /* Out of memory */
 		return;
 	svc_pollfd = new_svc_pollfd;
 
 	svc_pollfd[svc_max_pollfd].fd = sock;
 	svc_pollfd[svc_max_pollfd].events = (POLLIN | POLLPRI |POLLRDNORM | POLLRDBAND);
+	svc_pollfd[svc_max_pollfd].revents = 0;
 	++svc_max_pollfd;
 }
 
@@ -577,7 +598,7 @@ static void svc_getreq_common(int a_fd)
 
 
 CPPUTILS_C_CODE_INITIALIZER(xdr_rpc_svc_c) {
-	svc_pollfd = (struct pollfd*)malloc(sizeof(struct pollfd*));
+	svc_pollfd = (struct pollfd*)malloc(sizeof(struct pollfd));
 	if (!svc_pollfd) {
 		exit(1);
 	}
