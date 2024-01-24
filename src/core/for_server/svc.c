@@ -54,14 +54,17 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 
 #include <rpc/wrpc_first_com_include.h>
 #include <cinternal/internal_header.h>
+#include <cinternal/hash/phash.h>
 #ifdef _WIN32
 #include "rpc/pmap_clnt.h"
 #include <stdio.h>
+#define SizeOfHashMap	sizeof_xports
 #else
 #include <sys/errno.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <errno.h>
+#define SizeOfHashMap	_rpc_dtablesize()
 #endif
 #include "xdr_rpc_debug.h"
 #include "rpc/svc.h"
@@ -71,6 +74,9 @@ static SVCXPRT** xports = NULL;
 #ifdef _WIN32
 static rpcsocket_t sizeof_xports = 0;
 #endif
+
+//static CinternalPHash_t s_hashXports = CPPUTILS_NULL;
+
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
@@ -88,68 +94,73 @@ static struct svc_callout {
 	void		    (*sc_dispatch)();
 } *svc_head;
 
-static struct svc_callout *svc_find();
+static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout** prev);
+
+
+static inline SVCXPRT* FindXportFromFdInline(int a_fd) {
+	if (a_fd < SizeOfHashMap) {
+		return xports[a_fd];
+	}
+	return CPPUTILS_NULL;
+}
+
+
+static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
+	SVCXPRT** xportsTmp;
+	register rpcsocket_t sock = a_xprt->xp_sock;
+#ifdef _WIN32
+	while (sock >= sizeof_xports) {
+		sizeof_xports *= 2;
+		xportsTmp = (SVCXPRT**)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT*));
+		if (!xportsTmp) {
+			XDR_RPC_ERR("realloc returned null!");
+			exit(1);
+		}
+		xports = xportsTmp;
+	}
+
+	xports[sock] = a_xprt;
+
+#else
+	if (sock < _rpc_dtablesize()) {
+		xports[sock] = xprt;
+	}
+	else {
+		XDR_RPC_ERR("Number of connections is bigger than _rpc_dtablesize()(%d), that is currently not supported", _rpc_dtablesize());
+		exit(1);
+	}
+#endif
+}
+
 
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
  * Activate a transport handle.
  */
-void
-xprt_register(xprt)
-	SVCXPRT *xprt;
+void xprt_register(SVCXPRT* xprt)
 {
-	SVCXPRT** xportsTmp;
 	register rpcsocket_t sock = xprt->xp_sock;
+
+	AddXportToHashInline(xprt);
 	
-#ifdef _WIN32
-	while (sock >= sizeof_xports) {
-		sizeof_xports *= 2;
-		xportsTmp = (SVCXPRT **)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT *));
-		if (!xportsTmp) {
-			fprintf(stderr, "realloc returned null!\n");
-			exit(1);
-		}
-		xports = xportsTmp;
-	}
-
-
 	if (svc_fdset.fd_count < FD_SETSIZE) {
-		xports[sock] = xprt;
 		FD_SET(sock, &svc_fdset);
 	} else {		
-		XDR_RPC_ERR("too many connections (%d), compilation constant FD_SETSIZE was only %d", (int)sock, FD_SETSIZE);
+		XDR_RPC_ERR("Number of connections is bigger than FD_SETSIZE(%d), that is currently not supported",FD_SETSIZE);
+		exit(1);
 	}
-#else
-
-	if (xports == NULL) {
-		xports = (SVCXPRT**)mem_alloc(FD_SETSIZE * sizeof(SVCXPRT*));
-	}
-
-	if (sock < _rpc_dtablesize()) {
-		xports[sock] = xprt;
-		FD_SET(sock, &svc_fdset);
-	}
-#endif
 }
 
 /*
  * De-activate a transport handle. 
  */
-void
-xprt_unregister(xprt) 
-	SVCXPRT *xprt;
+void xprt_unregister(SVCXPRT* xprt)
 { 
 	register rpcsocket_t sock = xprt->xp_sock;
-#ifdef _WIN32
-	if ((sock < sizeof_xports) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT*)0;
-		FD_CLR((unsigned)sock, &svc_fdset);
-#else
-	if ((sock < _rpc_dtablesize()) && (xports[sock] == xprt)) {
+	if ((sock < SizeOfHashMap) && (xports[sock] == xprt)) {
 		xports[sock] = (SVCXPRT*)0;
 		FD_CLR(sock, &svc_fdset);
-#endif
 	}
 }
 
@@ -222,11 +233,7 @@ svc_unregister(prog, vers)
  * Search the callout list for a program number, return the callout
  * struct.
  */
-static struct svc_callout *
-svc_find(prog, vers, prev)
-	u_long prog;
-	u_long vers;
-	struct svc_callout **prev;
+static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout**  prev)
 {
 	register struct svc_callout *s, *p;
 
@@ -460,7 +467,7 @@ static void svc_getreq_common(int a_fd)
 	u_long low_vers;
 	u_long high_vers;
 	char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
-	register SVCXPRT* const xprt = xports[a_fd];
+	register SVCXPRT* const xprt = FindXportFromFdInline(a_fd);
 
 	if (!xprt) {
 		XDR_RPC_ERR("xprt is null");
@@ -527,12 +534,18 @@ static void svc_getreq_common(int a_fd)
 
 
 CPPUTILS_C_CODE_INITIALIZER(xdr_rpc_svc_c){
+#ifdef _WIN32
 	xports = (SVCXPRT**)malloc(sizeof(SVCXPRT*));
 	if (!xports) {
 		// low memory
 		exit(1);
 	}
-#ifdef _WIN32
 	sizeof_xports = 1;
+#else
+	xports = (SVCXPRT**)mem_alloc(_rpc_dtablesize() * sizeof(SVCXPRT*));
+	if (!xports) {
+		// low memory
+		exit(1);
+	}
 #endif
 }
