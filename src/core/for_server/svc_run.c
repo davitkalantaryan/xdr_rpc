@@ -50,11 +50,13 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/svc.h>
+#include "xdr_rpc_debug.h"
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
 #include <errno.h>
+#define SleepMsIntr(_x)		SleepEx(_x,TRUE)
 typedef HANDLE	xdr_rpc_thread_t;
 #define _rpc_dtablesize(...)	0
 #else
@@ -64,11 +66,14 @@ typedef pthread_t	xdr_rpc_thread_t;
 extern int errno;
 #define WSAGetLastError(...)	errno
 #define GetCurrentThread	pthread_self
+#define SleepMsIntr(_x)		usleep(1000*(_x))
 #endif
 
 static xdr_rpc_thread_t  s_svc_run_thread = NULL;
 static BOOL svc_run_stop;
 MINI_XDR_EXPORT fd_set svc_fdset;
+
+static int XdrRpcMultiplexAllSockets(void);
 
 static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
 {
@@ -76,12 +81,8 @@ static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
 }
 
 
-MINI_XDR_EXPORT
-void
-svc_run(void)
+MINI_XDR_EXPORT void svc_run(void)
 {
-	fd_set readfds;
-
 	s_svc_run_thread = GetCurrentThread();
 
 #ifdef _WIN32
@@ -92,30 +93,16 @@ svc_run(void)
 	svc_run_stop = TRUE;
 
 	while (svc_run_stop) {
-		readfds = svc_fdset;
 
-		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
-		case -1:
-			switch (WSAGetLastError()) {
-			case WSANOTINITIALISED: case WSAEFAULT:
-				perror("svc_run: - select failed");
-				return;
-			default:
-				break;
-			}
-			continue;
-		case 0:
-			continue;
-		default:
-			svc_getreqset(&readfds);
+		if (XdrRpcMultiplexAllSockets()) {
+			svc_run_stop = 0;
+			break;
 		}
-	}
+	}  //  while (svc_run_stop) {
 }
 
 
-MINI_XDR_EXPORT
-void
-svc_exit(void)
+MINI_XDR_EXPORT void svc_exit(void)
 {
 	xdr_rpc_thread_t thisThread = GetCurrentThread();
 	svc_run_stop = FALSE;
@@ -126,4 +113,29 @@ svc_exit(void)
 		pthread_kill();  // todo:
 #endif
 	}
+}
+
+
+static int XdrRpcMultiplexAllSockets(void)
+{
+	fd_set readfds = svc_fdset;
+
+	switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
+	case -1:
+		switch (WSAGetLastError()) {
+		case WSANOTINITIALISED: case WSAEFAULT:
+			XDR_RPC_ERR("svc_run: - select failed");
+			return 1;
+		default:
+			SleepMsIntr(10);
+			break;
+		}
+		return 0;
+	case 0:
+		return 0;
+	default:
+		svc_getreqset(&readfds);
+	}
+
+	return 0;
 }
