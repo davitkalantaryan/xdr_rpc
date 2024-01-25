@@ -66,7 +66,6 @@ typedef ULONG nfds_t;
 #define WaitIntrptInf()		SleepEx(INFINITE,TRUE)
 #define MyPoll				WSAPoll
 #define ThreadSimpleInterrupt(_thread)	QueueUserAPC(&SimpleInterruptFunction, _thread, 0)
-#define PollThreadInterruptForPoll(_arg)	QueueUserAPC(&PollInterruptFunction, s_poll_thread, (ULONG_PTR)((size_t)(_arg)))
 #else
 #include <sys/errno.h>
 #include <pthread.h>
@@ -80,21 +79,10 @@ extern int errno;
 
 #define MAX_POLLFD_SOCKS_COUNT	1024
 
-struct SPollAsyncStruct {
-	struct pollfd*	pPollFds;
-	nfds_t			nFds;
-	int				nRet;
-};
-
-static cinternal_thread_t  s_poll_thread = CPPUTILS_NULL;
 static cinternal_thread_t  s_svc_run_thread = CPPUTILS_NULL;
-static cinternal_unnamed_sema_t	s_poll_sema;
 static BOOL svc_run_stop;
-static bool s_poll_ongoing = false;
 
 static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds);
-static cinternal_thread_ret_t PollThreadFunctionStatic(void* a_pArg);
-static VOID NTAPI PollInterruptFunction(_In_ ULONG_PTR a_parameter);
 static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter);
 
 CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, int a_max_pollfd);
@@ -102,11 +90,7 @@ CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, i
 
 MINI_XDR_EXPORT void svc_run(void)
 {
-	int nRet;
-	struct pollfd* pPollFds;
-	cinternal_thread_ret_t threadRet;
-
-	pPollFds = malloc(MAX_POLLFD_SOCKS_COUNT * sizeof(struct pollfd));
+	struct pollfd* const pPollFds = (struct pollfd*)malloc(MAX_POLLFD_SOCKS_COUNT * sizeof(struct pollfd));
 	if (!pPollFds) {
 		XDR_RPC_ERR("Unable allocate PollFds. Going to exit");
 		exit(1);
@@ -121,24 +105,6 @@ MINI_XDR_EXPORT void svc_run(void)
 
 	svc_run_stop = TRUE;
 
-	nRet = (int)cinternal_thread_create(&s_poll_thread, &PollThreadFunctionStatic, CPPUTILS_NULL);
-	if (nRet) {
-		s_poll_thread = CPPUTILS_NULL;
-		s_svc_run_thread = CPPUTILS_NULL;
-		XDR_RPC_ERR("Unable create poll thread. Going to exit");
-		exit(1);
-	}
-
-	nRet = (int)cinternal_unnamed_sema_create(&s_poll_sema, 0);
-	if (nRet) {
-		ThreadSimpleInterrupt(&s_poll_thread);
-		cinternal_thread_wait_and_clean(&s_poll_thread, &threadRet);
-		s_poll_thread = CPPUTILS_NULL;
-		s_svc_run_thread = CPPUTILS_NULL;
-		XDR_RPC_ERR("Unable create poll sema. Going to exit");
-		exit(1);
-	}
-
 	while (svc_run_stop) {
 
 		if (XdrRpcMultiplexAllSockets(pPollFds)) {
@@ -148,9 +114,6 @@ MINI_XDR_EXPORT void svc_run(void)
 	}  //  while (svc_run_stop) {
 
 	svc_run_stop = 0;
-	ThreadSimpleInterrupt(&s_poll_thread);
-	cinternal_thread_wait_and_clean(&s_poll_thread, &threadRet);
-	s_poll_thread = CPPUTILS_NULL;
 	s_svc_run_thread = CPPUTILS_NULL;
 	free(pPollFds);
 }
@@ -168,134 +131,48 @@ MINI_XDR_EXPORT void svc_exit(void)
 
 static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds)
 {
-	// FD_SETSIZE
-	bool bPollOngoing = false;
-	struct SPollAsyncStruct pollStruct;
-	fd_set readfds;
-	rpcsocket_t sock;
 	struct SVCXPRTPrivListItem * pListItem = s_xprtsListFirst;
 	size_t socksCount;
-	int nMaxFd = 0;
+	int nPollRet;
 
 	if (!pListItem) { return 1; }
 
-	FD_ZERO(&readfds);
-
-	//for (socksCount = 0; pListItem && (socksCount < FD_SETSIZE); pListItem = pListItem->next,++socksCount) {
-	for (socksCount = 0; pListItem && (socksCount < 2); pListItem = pListItem->next, ++socksCount) {
-		sock = (rpcsocket_t)pListItem->xprt->xp_sock;
-		if (nMaxFd < ((int)sock)) { nMaxFd = (int)sock; }
-		FD_SET(sock, &readfds);
+	for (socksCount = 0; pListItem && (socksCount < MAX_POLLFD_SOCKS_COUNT); pListItem = pListItem->next, ++socksCount) {
+		a_pPollFds[socksCount].fd = pListItem->xprt->xp_sock;
+		a_pPollFds[socksCount].events = POLLIN | POLLRDNORM | POLLRDBAND;
+		a_pPollFds[socksCount].revents = 0;
 	}
 
 	if (pListItem) {
-		
-		u_long mode=1;
-		int iResult;
-
-		for (socksCount = 0; pListItem && (socksCount < MAX_POLLFD_SOCKS_COUNT); pListItem = pListItem->next, ++socksCount) {
-			a_pPollFds[socksCount].fd = pListItem->xprt->xp_sock;
-
-			iResult = ioctlsocket(a_pPollFds[socksCount].fd, FIONBIO, &mode);
-
-			if (iResult != NO_ERROR) {
-				printf("ioctlsocket failed with error: %ld\n", iResult);
-			}
-			else {
-				if (mode == 0) {
-					printf("Socket is in blocking mode.\n");
-				}
-				else {
-					printf("Socket is in non-blocking mode.\n");
-				}
-			}
-
-			a_pPollFds[socksCount].events = POLLIN | POLLRDNORM | POLLRDBAND;
-			a_pPollFds[socksCount].revents = 0;
-		}
-
-		pollStruct.pPollFds = a_pPollFds;
-		pollStruct.nFds = (nfds_t)socksCount;
-		pollStruct.nRet = 0;
-
-		PollThreadInterruptForPoll(&pollStruct);
-		bPollOngoing = true;
+		XDR_RPC_ERR("Some sockets are not multiplexed");
 	}
 
-	//if (svc_fdset.fd_count < FD_SETSIZE) {
-	//	FD_SET(sock, &svc_fdset);
-	//}
-	//else {
-	//	XDR_RPC_ERR("Number of connections is bigger than FD_SETSIZE(%d), that is currently not supported", FD_SETSIZE);
-	//	exit(1);
-	//}
+	nPollRet = MyPoll(a_pPollFds, (nfds_t)socksCount, -1);
 
-	switch (select(nMaxFd+1, &readfds, NULL, NULL, NULL)) {
+	switch (nPollRet) {
 	case -1:
+		if (errno == EINTR)
+			return 0;
 		switch (WSAGetLastError()) {
 		case WSANOTINITIALISED: case WSAEFAULT:
-			XDR_RPC_ERR("svc_run: - select failed");
+			XDR_RPC_ERR("svc_run: - poll failed. RPC run will be exited");
 			return 1;
 		default:
-			SleepMsIntr(10);
-			break;
+			SleepEx(10, TRUE);
+			return 0;
 		}
-		break;
 	case 0:
-		break;
+		return 0;
 	default:
-		if (bPollOngoing) {
-			ThreadSimpleInterrupt(s_poll_thread);
-		}
-		svc_getreqset(&readfds);
-		break;
-	}
-
-	if (bPollOngoing) {
-
-		while (s_poll_ongoing) {
-			cinternal_unnamed_sema_wait(&s_poll_sema);
-		}
-
-		if (pollStruct.nRet > 0) {
-			svc_getreq_poll(a_pPollFds, pollStruct.nRet, (int)pollStruct.nFds);
-		}
-	}
+		svc_getreq_poll(a_pPollFds, nPollRet, (int)socksCount);
+		return 0;
+	}  //  switch (nPollRet){
 
 	return 0;
-}
-
-
-static cinternal_thread_ret_t PollThreadFunctionStatic(void* a_pArg)
-{
-	(void)a_pArg;
-
-	while (svc_run_stop) {
-		s_poll_ongoing = false;
-		WaitIntrptInf();
-	}  //  while (svc_run_stop) {
-
-	return (cinternal_thread_ret_t)0;
 }
 
 
 static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter)
 {
 	(void)a_parameter;
-}
-
-
-static VOID NTAPI PollInterruptFunction(_In_ ULONG_PTR a_parameter)
-{
-	struct SPollAsyncStruct* const pPollStruct = (struct SPollAsyncStruct*)((size_t)a_parameter);
-
-	s_poll_ongoing = true;
-	pPollStruct->nRet = MyPoll(pPollStruct->pPollFds, pPollStruct->nFds, -1);
-
-	if (pPollStruct->nRet > 0) {
-		s_poll_ongoing = false;
-		ThreadSimpleInterrupt(s_svc_run_thread);
-	}
-	s_poll_ongoing = false;
-	cinternal_unnamed_sema_post(&s_poll_sema);
 }

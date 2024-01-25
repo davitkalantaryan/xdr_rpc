@@ -95,6 +95,19 @@ static struct svc_callout {
 
 static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout** prev);
 
+static inline void MakeSocketNonBlockingInline(rpcsocket_t a_sock) {
+#ifdef	_WIN32
+	u_long on = 1;
+	ioctlsocket(a_sock, FIONBIO, &on);
+#else
+	int status;
+	if ((status = fcntl(a_sock, F_GETFL, 0)) != -1) {
+		status |= O_NONBLOCK;
+		fcntl(a_sock, F_SETFL, status);
+	}
+#endif
+}
+
 
 static inline SVCXPRT* FindXportFromFdInline(int a_fd) {
 	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports,(void*)((size_t)a_fd),0);
@@ -164,6 +177,7 @@ static inline void RemoveXportFromHashInline(SVCXPRT* a_xprt) {
 void xprt_register(SVCXPRT* xprt)
 {
 	register rpcsocket_t sock = xprt->xp_sock;
+	MakeSocketNonBlockingInline(sock);
 	AddXportToHashInline(xprt);	
 }
 
@@ -452,7 +466,7 @@ CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, i
 
 		if (p->fd != -1 && p->revents){
 			/* fd has input waiting */
-			if (p->revents & POLLNVAL)
+			if (p->revents & (POLLERR | POLLHUP | POLLNVAL))
 				xprt_unregister(FindXportFromFdInline((int)p->fd));
 			else
 				svc_getreq_common((int)p->fd);
