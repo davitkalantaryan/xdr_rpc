@@ -51,6 +51,7 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/svc.h>
 #include "xdr_rpc_debug.h"
+#include "xdr_rpc_priv_lists.h"
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -71,7 +72,6 @@ extern int errno;
 
 static xdr_rpc_thread_t  s_svc_run_thread = NULL;
 static BOOL svc_run_stop;
-MINI_XDR_EXPORT fd_set svc_fdset;
 
 static int XdrRpcMultiplexAllSockets(void);
 
@@ -118,9 +118,32 @@ MINI_XDR_EXPORT void svc_exit(void)
 
 static int XdrRpcMultiplexAllSockets(void)
 {
-	fd_set readfds = svc_fdset;
+	// FD_SETSIZE
+	fd_set readfds;
+	rpcsocket_t sock;
+	struct SVCXPRTPrivListItem * pListItem = s_xprtsListFirst;
+	size_t socksCount;
+	int nMaxFd = 0;
 
-	switch (select(_rpc_dtablesize(), &readfds, NULL, NULL, NULL)) {
+	if (!pListItem) { return 1; }
+
+	FD_ZERO(&readfds);
+
+	for (socksCount = 0; pListItem && (socksCount < FD_SETSIZE); pListItem = pListItem->next,++socksCount) {
+		sock = (rpcsocket_t)pListItem->xprt->xp_sock;
+		if (nMaxFd < ((int)sock)) { nMaxFd = (int)sock; }
+		FD_SET(sock, &readfds);
+	}
+
+	//if (svc_fdset.fd_count < FD_SETSIZE) {
+	//	FD_SET(sock, &svc_fdset);
+	//}
+	//else {
+	//	XDR_RPC_ERR("Number of connections is bigger than FD_SETSIZE(%d), that is currently not supported", FD_SETSIZE);
+	//	exit(1);
+	//}
+
+	switch (select(nMaxFd+1, &readfds, NULL, NULL, NULL)) {
 	case -1:
 		switch (WSAGetLastError()) {
 		case WSANOTINITIALISED: case WSAEFAULT:

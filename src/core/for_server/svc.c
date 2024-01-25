@@ -164,15 +164,7 @@ static inline void RemoveXportFromHashInline(SVCXPRT* a_xprt) {
 void xprt_register(SVCXPRT* xprt)
 {
 	register rpcsocket_t sock = xprt->xp_sock;
-
-	AddXportToHashInline(xprt);
-	
-	if (svc_fdset.fd_count < FD_SETSIZE) {
-		FD_SET(sock, &svc_fdset);
-	} else {		
-		XDR_RPC_ERR("Number of connections is bigger than FD_SETSIZE(%d), that is currently not supported",FD_SETSIZE);
-		exit(1);
-	}
+	AddXportToHashInline(xprt);	
 }
 
 /*
@@ -182,7 +174,6 @@ void xprt_unregister(SVCXPRT* xprt)
 { 
 	register rpcsocket_t sock = xprt->xp_sock;
 	RemoveXportFromHashInline(xprt);
-	FD_CLR(sock, &svc_fdset);
 }
 
 
