@@ -136,6 +136,8 @@ MINI_XDR_EXPORT void svc_run(void)
 		}
 	}  //  while (svc_run_stop) {
 
+	svc_run_stop = 0;
+	ThreadSimpleInterrupt(&s_poll_thread);
 	cinternal_thread_wait_and_clean(&s_poll_thread, &threadRet);
 	s_poll_thread = CPPUTILS_NULL;
 	s_svc_run_thread = CPPUTILS_NULL;
