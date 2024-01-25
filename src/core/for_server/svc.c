@@ -439,6 +439,31 @@ void svc_getreq(int rdfds)
 static void svc_getreq_common(int fd);
 
 
+CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, int a_max_pollfd)
+{
+	register int fds_found;
+	int i;
+
+	if (pollretval == 0)
+		return;
+
+	for (i = fds_found = 0; i < a_max_pollfd; ++i){
+		register struct pollfd* p = &pfdp[i];
+
+		if (p->fd != -1 && p->revents){
+			/* fd has input waiting */
+			if (p->revents & POLLNVAL)
+				xprt_unregister(FindXportFromFdInline((int)p->fd));
+			else
+				svc_getreq_common((int)p->fd);
+
+			if (++fds_found >= pollretval)
+				break;
+		}  //  if (p->fd != -1 && p->revents){
+	}  //  for (i = fds_found = 0; i < a_max_pollfd; ++i){
+}
+
+
 void svc_getreqset(fd_set* readfds)
 {
 #ifndef _WIN32
