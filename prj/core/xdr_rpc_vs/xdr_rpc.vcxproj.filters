@@ -31,6 +31,9 @@
     <Filter Include="Source Files\include">
       <UniqueIdentifier>{3160e2fb-b40a-477e-8d7d-aaf0ed3ce8f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\for_server\tools">
+      <UniqueIdentifier>{8fa7f3d3-5261-4477-8f8b-93d109efe7eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\core\auth_non.c">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\core\for_server\clnt_per.c">
       <Filter>Source Files\for_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\contrib\cinternal\src\core\cinternal_core_hash_phash.c">
+      <Filter>Source Files\for_server\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
