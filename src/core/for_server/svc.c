@@ -557,6 +557,7 @@ CPPUTILS_C_CODE_INITIALIZER(initialize_xdr_rpc_svc_c){
 		XDR_RPC_ERR("Creation of s_hashXports failed");
 		exit(1);
 	}
+	atexit(&cleanup_xdr_rpc_svc_c);
 }
 
 
