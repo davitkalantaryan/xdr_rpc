@@ -50,39 +50,52 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/svc.h>
+#include <cinternal/threading.h>
+#define cinternal_unnamed_sema_wait_ms_needed
+#include <cinternal/unnamed_semaphore.h>
 #include "xdr_rpc_debug.h"
 #include "xdr_rpc_priv_lists.h"
+#include <stdbool.h>
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
 #include <errno.h>
+typedef ULONG nfds_t;
 #define SleepMsIntr(_x)		SleepEx(_x,TRUE)
-typedef HANDLE	xdr_rpc_thread_t;
-#define _rpc_dtablesize(...)	0
+#define WaitIntrptInf()		SleepEx(INFINITE,TRUE)
+#define MyPoll				WSAPoll
+#define ThreadSimpleInterrupt(_thread)	QueueUserAPC(&SimpleInterruptFunction, _thread, 0)
 #else
 #include <sys/errno.h>
 #include <pthread.h>
-typedef pthread_t	xdr_rpc_thread_t;
 extern int errno;
 #define WSAGetLastError(...)	errno
 #define GetCurrentThread	pthread_self
 #define SleepMsIntr(_x)		usleep(1000*(_x))
+#define WaitIntrptInf()		sleep(360000)
+#define MyPoll				poll
 #endif
 
-static xdr_rpc_thread_t  s_svc_run_thread = NULL;
+#define MAX_POLLFD_SOCKS_COUNT	1024
+
+static cinternal_thread_t  s_svc_run_thread = CPPUTILS_NULL;
 static BOOL svc_run_stop;
 
-static int XdrRpcMultiplexAllSockets(void);
+static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds);
+static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter);
 
-static VOID NTAPI InterruptFunction(_In_ ULONG_PTR a_parameter)
-{
-	(void)a_parameter;
-}
+CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, int a_max_pollfd);
 
 
 MINI_XDR_EXPORT void svc_run(void)
 {
+	struct pollfd* const pPollFds = (struct pollfd*)malloc(MAX_POLLFD_SOCKS_COUNT * sizeof(struct pollfd));
+	if (!pPollFds) {
+		XDR_RPC_ERR("Unable allocate PollFds. Going to exit");
+		exit(1);
+	}
+
 	s_svc_run_thread = GetCurrentThread();
 
 #ifdef _WIN32
@@ -94,71 +107,72 @@ MINI_XDR_EXPORT void svc_run(void)
 
 	while (svc_run_stop) {
 
-		if (XdrRpcMultiplexAllSockets()) {
+		if (XdrRpcMultiplexAllSockets(pPollFds)) {
 			svc_run_stop = 0;
 			break;
 		}
 	}  //  while (svc_run_stop) {
+
+	svc_run_stop = 0;
+	s_svc_run_thread = CPPUTILS_NULL;
+	free(pPollFds);
 }
 
 
 MINI_XDR_EXPORT void svc_exit(void)
 {
-	xdr_rpc_thread_t thisThread = GetCurrentThread();
+	cinternal_thread_t thisThread = GetCurrentThread();
 	svc_run_stop = FALSE;
-	if (thisThread != s_svc_run_thread) {
-#ifdef _WIN32
-		QueueUserAPC(&InterruptFunction, s_svc_run_thread, 0);
-#else
-		pthread_kill();  // todo:
-#endif
+	if (s_svc_run_thread && (thisThread != s_svc_run_thread)) {
+		ThreadSimpleInterrupt(s_svc_run_thread);
 	}
 }
 
 
-static int XdrRpcMultiplexAllSockets(void)
+static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds)
 {
-	// FD_SETSIZE
-	fd_set readfds;
-	rpcsocket_t sock;
 	struct SVCXPRTPrivListItem * pListItem = s_xprtsListFirst;
 	size_t socksCount;
-	int nMaxFd = 0;
+	int nPollRet;
 
 	if (!pListItem) { return 1; }
 
-	FD_ZERO(&readfds);
-
-	for (socksCount = 0; pListItem && (socksCount < FD_SETSIZE); pListItem = pListItem->next,++socksCount) {
-		sock = (rpcsocket_t)pListItem->xprt->xp_sock;
-		if (nMaxFd < ((int)sock)) { nMaxFd = (int)sock; }
-		FD_SET(sock, &readfds);
+	for (socksCount = 0; pListItem && (socksCount < MAX_POLLFD_SOCKS_COUNT); pListItem = pListItem->next, ++socksCount) {
+		a_pPollFds[socksCount].fd = pListItem->xprt->xp_sock;
+		a_pPollFds[socksCount].events = POLLIN | POLLRDNORM | POLLRDBAND;
+		a_pPollFds[socksCount].revents = 0;
 	}
 
-	//if (svc_fdset.fd_count < FD_SETSIZE) {
-	//	FD_SET(sock, &svc_fdset);
-	//}
-	//else {
-	//	XDR_RPC_ERR("Number of connections is bigger than FD_SETSIZE(%d), that is currently not supported", FD_SETSIZE);
-	//	exit(1);
-	//}
+	if (pListItem) {
+		XDR_RPC_ERR("Some sockets are not multiplexed");
+	}
 
-	switch (select(nMaxFd+1, &readfds, NULL, NULL, NULL)) {
+	nPollRet = MyPoll(a_pPollFds, (nfds_t)socksCount, -1);
+
+	switch (nPollRet) {
 	case -1:
+		if (errno == EINTR)
+			return 0;
 		switch (WSAGetLastError()) {
 		case WSANOTINITIALISED: case WSAEFAULT:
-			XDR_RPC_ERR("svc_run: - select failed");
+			XDR_RPC_ERR("svc_run: - poll failed. RPC run will be exited");
 			return 1;
 		default:
-			SleepMsIntr(10);
-			break;
+			SleepEx(10, TRUE);
+			return 0;
 		}
-		return 0;
 	case 0:
 		return 0;
 	default:
-		svc_getreqset(&readfds);
-	}
+		svc_getreq_poll(a_pPollFds, nPollRet, (int)socksCount);
+		return 0;
+	}  //  switch (nPollRet){
 
 	return 0;
+}
+
+
+static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter)
+{
+	(void)a_parameter;
 }
