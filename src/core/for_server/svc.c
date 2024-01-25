@@ -58,24 +58,23 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 #ifdef _WIN32
 #include "rpc/pmap_clnt.h"
 #include <stdio.h>
-#define SizeOfHashMap	sizeof_xports
 #else
 #include <sys/errno.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <errno.h>
-#define SizeOfHashMap	_rpc_dtablesize()
 #endif
+#include "xdr_rpc_priv_lists.h"
 #include "xdr_rpc_debug.h"
 #include "rpc/svc.h"
 #include "rpc/svc_auth.h"
 
-static SVCXPRT** xports = NULL;
-#ifdef _WIN32
-static rpcsocket_t sizeof_xports = 0;
-#endif
 
-//static CinternalPHash_t s_hashXports = CPPUTILS_NULL;
+CPPUTILS_BEGIN_C
+
+CPPUTILS_DLL_PRIVATE struct SVCXPRTPrivListItem* s_xprtsListFirst = CPPUTILS_NULL;
+static struct SVCXPRTPrivListItem* s_xprtsListLast = CPPUTILS_NULL;
+static CinternalPHash_t s_hashXports = CPPUTILS_NULL;
 
 
 #define NULL_SVC ((struct svc_callout *)0)
@@ -98,45 +97,61 @@ static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout
 
 
 static inline SVCXPRT* FindXportFromFdInline(int a_fd) {
-	if (a_fd < SizeOfHashMap) {
-		return xports[a_fd];
+	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports,(void*)((size_t)a_fd),0);
+	if (hashItem) {
+		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->hit.data;
+		return pListItem->xprt;
 	}
 	return CPPUTILS_NULL;
 }
 
 
 static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
-	SVCXPRT** xportsTmp;
+	struct SVCXPRTPrivListItem* pListItem;
+	size_t unHash;
 	register rpcsocket_t sock = a_xprt->xp_sock;
-#ifdef _WIN32
-	while (sock >= sizeof_xports) {
-		sizeof_xports *= 2;
-		xportsTmp = (SVCXPRT**)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT*));
-		if (!xportsTmp) {
-			XDR_RPC_ERR("realloc returned null!");
-			exit(1);
-		}
-		xports = xportsTmp;
+	const CinternalPHashItem_t hashItem = CInternalPHashFindEx(s_hashXports, (void*)((size_t)sock), 0,&unHash);
+	if (hashItem) {
+		return;
 	}
 
-	xports[sock] = a_xprt;
-
-#else
-	if (sock < _rpc_dtablesize()) {
-		xports[sock] = xprt;
-	}
-	else {
-		XDR_RPC_ERR("Number of connections is bigger than _rpc_dtablesize()(%d), that is currently not supported", _rpc_dtablesize());
+	pListItem = (struct SVCXPRTPrivListItem*)malloc(sizeof(struct SVCXPRTPrivListItem));
+	if (!pListItem) {
+		XDR_RPC_ERR("malloc returned null!");
 		exit(1);
 	}
-#endif
+
+	pListItem->xprt = a_xprt;
+	pListItem->prev = s_xprtsListLast;
+	pListItem->next = CPPUTILS_NULL;
+	if (s_xprtsListLast) {
+		s_xprtsListLast->next = pListItem;
+	}
+	else {
+		s_xprtsListFirst = pListItem;
+	}
+	s_xprtsListLast = pListItem;
+
+	pListItem->hashIt = CInternalPHashAddDataWithKnownHashSmlInt(s_hashXports, pListItem, sock, unHash);
+	if (!(pListItem->hashIt)) {
+		free(pListItem);
+		XDR_RPC_ERR("adding to hash failed!");
+		exit(1);
+	}
 }
 
 
 static inline void RemoveXportFromHashInline(SVCXPRT* a_xprt) {
 	register rpcsocket_t sock = a_xprt->xp_sock;
-	if ((sock < SizeOfHashMap) && (xports[sock] == a_xprt)) {
-		xports[sock] = (SVCXPRT*)0;
+	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports, (void*)((size_t)sock), 0);
+	if (hashItem) {
+		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->hit.data;
+		if (pListItem->next) { pListItem->next->prev = pListItem->prev; }
+		if (pListItem->prev) { pListItem->prev->next = pListItem->next; }
+		if (pListItem == s_xprtsListFirst) { s_xprtsListFirst = pListItem->next; }
+		if (pListItem == s_xprtsListLast) { s_xprtsListLast = pListItem->prev; }
+		CInternalPHashRemoveDataEx(s_hashXports, hashItem);
+		free(pListItem);
 	}
 }
 
@@ -539,19 +554,19 @@ static void svc_getreq_common(int a_fd)
 }
 
 
-CPPUTILS_C_CODE_INITIALIZER(xdr_rpc_svc_c){
-#ifdef _WIN32
-	xports = (SVCXPRT**)malloc(sizeof(SVCXPRT*));
-	if (!xports) {
-		// low memory
-		exit(1);
-	}
-	sizeof_xports = 1;
-#else
-	xports = (SVCXPRT**)mem_alloc(_rpc_dtablesize() * sizeof(SVCXPRT*));
-	if (!xports) {
-		// low memory
-		exit(1);
-	}
-#endif
+static void cleanup_xdr_rpc_svc_c(void)
+{
 }
+
+
+CPPUTILS_C_CODE_INITIALIZER(initialize_xdr_rpc_svc_c){
+
+	s_hashXports = CInternalPHashCreateSmlInt(2048);
+	if (!s_hashXports) {
+		XDR_RPC_ERR("Creation of s_hashXports failed");
+		exit(1);
+	}
+}
+
+
+CPPUTILS_END_C

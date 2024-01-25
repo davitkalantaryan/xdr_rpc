@@ -267,6 +267,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\contrib\cinternal\src\core\cinternal_core_hash_phash.c" />
     <ClCompile Include="..\..\..\src\core\auth_non.c" />
     <ClCompile Include="..\..\..\src\core\auth_uni.c" />
     <ClCompile Include="..\..\..\src\core\clnt_gen.c" />

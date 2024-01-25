@@ -23,6 +23,7 @@ struct SVCXPRTPrivListItem {
 	SVCXPRT* xprt;
 };
 
+extern CPPUTILS_DLL_PRIVATE struct SVCXPRTPrivListItem* s_xprtsListFirst;
 
 
 MINI_XDR_END_C_DECLS
