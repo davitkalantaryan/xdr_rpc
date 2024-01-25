@@ -51,6 +51,8 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 #include <rpc/wrpc_first_com_include.h>
 #include <rpc/svc.h>
 #include <cinternal/threading.h>
+#define cinternal_unnamed_sema_wait_ms_needed
+#include <cinternal/unnamed_semaphore.h>
 #include "xdr_rpc_debug.h"
 #include "xdr_rpc_priv_lists.h"
 #include <stdbool.h>
@@ -86,17 +88,16 @@ struct SPollAsyncStruct {
 
 static cinternal_thread_t  s_poll_thread = CPPUTILS_NULL;
 static cinternal_thread_t  s_svc_run_thread = CPPUTILS_NULL;
+static cinternal_unnamed_sema_t	s_poll_sema;
 static BOOL svc_run_stop;
 static bool s_poll_ongoing = false;
 
 static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds);
 static cinternal_thread_ret_t PollThreadFunctionStatic(void* a_pArg);
 static VOID NTAPI PollInterruptFunction(_In_ ULONG_PTR a_parameter);
+static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter);
 
-static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter)
-{
-	(void)a_parameter;
-}
+CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, int a_max_pollfd);
 
 
 MINI_XDR_EXPORT void svc_run(void)
@@ -125,6 +126,16 @@ MINI_XDR_EXPORT void svc_run(void)
 		s_poll_thread = CPPUTILS_NULL;
 		s_svc_run_thread = CPPUTILS_NULL;
 		XDR_RPC_ERR("Unable create poll thread. Going to exit");
+		exit(1);
+	}
+
+	nRet = (int)cinternal_unnamed_sema_create(&s_poll_sema, 0);
+	if (nRet) {
+		ThreadSimpleInterrupt(&s_poll_thread);
+		cinternal_thread_wait_and_clean(&s_poll_thread, &threadRet);
+		s_poll_thread = CPPUTILS_NULL;
+		s_svc_run_thread = CPPUTILS_NULL;
+		XDR_RPC_ERR("Unable create poll sema. Going to exit");
 		exit(1);
 	}
 
@@ -170,7 +181,8 @@ static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds)
 
 	FD_ZERO(&readfds);
 
-	for (socksCount = 0; pListItem && (socksCount < FD_SETSIZE); pListItem = pListItem->next,++socksCount) {
+	//for (socksCount = 0; pListItem && (socksCount < FD_SETSIZE); pListItem = pListItem->next,++socksCount) {
+	for (socksCount = 0; pListItem && (socksCount < 2); pListItem = pListItem->next, ++socksCount) {
 		sock = (rpcsocket_t)pListItem->xprt->xp_sock;
 		if (nMaxFd < ((int)sock)) { nMaxFd = (int)sock; }
 		FD_SET(sock, &readfds);
@@ -178,9 +190,27 @@ static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds)
 
 	if (pListItem) {
 		
+		u_long mode=1;
+		int iResult;
+
 		for (socksCount = 0; pListItem && (socksCount < MAX_POLLFD_SOCKS_COUNT); pListItem = pListItem->next, ++socksCount) {
 			a_pPollFds[socksCount].fd = pListItem->xprt->xp_sock;
-			a_pPollFds[socksCount].events = POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND;
+
+			iResult = ioctlsocket(a_pPollFds[socksCount].fd, FIONBIO, &mode);
+
+			if (iResult != NO_ERROR) {
+				printf("ioctlsocket failed with error: %ld\n", iResult);
+			}
+			else {
+				if (mode == 0) {
+					printf("Socket is in blocking mode.\n");
+				}
+				else {
+					printf("Socket is in non-blocking mode.\n");
+				}
+			}
+
+			a_pPollFds[socksCount].events = POLLIN | POLLRDNORM | POLLRDBAND;
 			a_pPollFds[socksCount].revents = 0;
 		}
 
@@ -210,15 +240,26 @@ static int XdrRpcMultiplexAllSockets(struct pollfd* a_pPollFds)
 			SleepMsIntr(10);
 			break;
 		}
-		return 0;
+		break;
 	case 0:
-		return 0;
+		break;
 	default:
+		if (bPollOngoing) {
+			ThreadSimpleInterrupt(s_poll_thread);
+		}
 		svc_getreqset(&readfds);
+		break;
 	}
 
 	if (bPollOngoing) {
-		ThreadSimpleInterrupt(s_poll_thread);
+
+		while (s_poll_ongoing) {
+			cinternal_unnamed_sema_wait(&s_poll_sema);
+		}
+
+		if (pollStruct.nRet > 0) {
+			svc_getreq_poll(a_pPollFds, pollStruct.nRet, (int)pollStruct.nFds);
+		}
 	}
 
 	return 0;
@@ -238,11 +279,23 @@ static cinternal_thread_ret_t PollThreadFunctionStatic(void* a_pArg)
 }
 
 
+static VOID NTAPI SimpleInterruptFunction(_In_ ULONG_PTR a_parameter)
+{
+	(void)a_parameter;
+}
+
+
 static VOID NTAPI PollInterruptFunction(_In_ ULONG_PTR a_parameter)
 {
 	struct SPollAsyncStruct* const pPollStruct = (struct SPollAsyncStruct*)((size_t)a_parameter);
 
 	s_poll_ongoing = true;
 	pPollStruct->nRet = MyPoll(pPollStruct->pPollFds, pPollStruct->nFds, -1);
+
+	if (pPollStruct->nRet > 0) {
+		s_poll_ongoing = false;
+		ThreadSimpleInterrupt(s_svc_run_thread);
+	}
 	s_poll_ongoing = false;
+	cinternal_unnamed_sema_post(&s_poll_sema);
 }
