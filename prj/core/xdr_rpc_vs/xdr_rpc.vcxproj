@@ -145,7 +145,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,7 +159,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -173,7 +173,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM64_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM64_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -187,7 +187,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -203,7 +203,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -221,7 +221,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -239,7 +239,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM64_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_ARM64_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -257,7 +257,7 @@
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\cinternal\include;$(ProjectDir)..\..\..\src\core\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FD_SETSIZE=512;bindresvport_real_is_needed=$(bindresvport_real_is_needed_env)0;MINI_XDR_COMPILING_SHARED_LIB;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
