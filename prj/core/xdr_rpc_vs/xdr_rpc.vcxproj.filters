@@ -117,7 +117,7 @@
     <ClCompile Include="..\..\..\src\core\for_server\clnt_per.c">
       <Filter>Source Files\for_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\contrib\cinternal\src\core\cinternal_core_hash_phash.c">
+    <ClCompile Include="..\..\..\contrib\cinternal\src\core\cinternal_core_hash.c">
       <Filter>Source Files\for_server\tools</Filter>
     </ClCompile>
   </ItemGroup>

@@ -54,7 +54,7 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 
 #include <rpc/wrpc_first_com_include.h>
 #include <cinternal/internal_header.h>
-#include <cinternal/hash/phash.h>
+#include <cinternal/hash.h>
 #ifdef _WIN32
 #include "rpc/pmap_clnt.h"
 #include <stdio.h>
@@ -74,7 +74,7 @@ CPPUTILS_BEGIN_C
 
 CPPUTILS_DLL_PRIVATE struct SVCXPRTPrivListItem* s_xprtsListFirst = CPPUTILS_NULL;
 static struct SVCXPRTPrivListItem* s_xprtsListLast = CPPUTILS_NULL;
-static CinternalPHash_t s_hashXports = CPPUTILS_NULL;
+static ConstCinternalHash_t s_hashXports = CPPUTILS_NULL;
 
 
 #define NULL_SVC ((struct svc_callout *)0)
@@ -110,9 +110,9 @@ static inline void MakeSocketNonBlockingInline(rpcsocket_t a_sock) {
 
 
 static inline SVCXPRT* FindXportFromFdInline(int a_fd) {
-	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports,(void*)((size_t)a_fd),0);
+	const CinternalHashItem_t hashItem = CInternalHashFind(s_hashXports,(void*)((size_t)a_fd),0);
 	if (hashItem) {
-		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->hit.data;
+		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->data;
 		return pListItem->xprt;
 	}
 	return CPPUTILS_NULL;
@@ -123,7 +123,7 @@ static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
 	struct SVCXPRTPrivListItem* pListItem;
 	size_t unHash;
 	register rpcsocket_t sock = a_xprt->xp_sock;
-	const CinternalPHashItem_t hashItem = CInternalPHashFindEx(s_hashXports, (void*)((size_t)sock), 0,&unHash);
+	const CinternalHashItem_t hashItem = CInternalHashFindEx(s_hashXports, (void*)((size_t)sock), 0,&unHash);
 	if (hashItem) {
 		return;
 	}
@@ -145,7 +145,7 @@ static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
 	}
 	s_xprtsListLast = pListItem;
 
-	pListItem->hashIt = CInternalPHashAddDataWithKnownHashSmlInt(s_hashXports, pListItem, sock, unHash);
+	pListItem->hashIt = CInternalHashAddDataWithKnownHash(s_hashXports, pListItem, CInternalSmallIntHPairFn(sock), unHash);
 	if (!(pListItem->hashIt)) {
 		free(pListItem);
 		XDR_RPC_ERR("adding to hash failed!");
@@ -156,14 +156,14 @@ static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
 
 static inline void RemoveXportFromHashInline(SVCXPRT* a_xprt) {
 	register rpcsocket_t sock = a_xprt->xp_sock;
-	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports, (void*)((size_t)sock), 0);
+	const CinternalHashItem_t hashItem = CInternalHashFind(s_hashXports, (void*)((size_t)sock), 0);
 	if (hashItem) {
-		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->hit.data;
+		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->data;
 		if (pListItem->next) { pListItem->next->prev = pListItem->prev; }
 		if (pListItem->prev) { pListItem->prev->next = pListItem->next; }
 		if (pListItem == s_xprtsListFirst) { s_xprtsListFirst = pListItem->next; }
 		if (pListItem == s_xprtsListLast) { s_xprtsListLast = pListItem->prev; }
-		CInternalPHashRemoveDataEx(s_hashXports, hashItem);
+		CInternalHashRemoveDataEx(s_hashXports, hashItem);
 		free(pListItem);
 	}
 }
@@ -591,7 +591,7 @@ static void cleanup_xdr_rpc_svc_c(void)
 
 CPPUTILS_C_CODE_INITIALIZER(initialize_xdr_rpc_svc_c){
 
-	s_hashXports = CInternalPHashCreateSmlInt(2048);
+	s_hashXports = CInternalHashCreateSmlInt(2048);
 	if (!s_hashXports) {
 		XDR_RPC_ERR("Creation of s_hashXports failed");
 		exit(1);
