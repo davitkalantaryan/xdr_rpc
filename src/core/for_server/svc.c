@@ -53,6 +53,8 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
  */
 
 #include <rpc/wrpc_first_com_include.h>
+#include <cinternal/internal_header.h>
+#include <cinternal/hash/phash.h>
 #ifdef _WIN32
 #include "rpc/pmap_clnt.h"
 #include <stdio.h>
@@ -62,22 +64,18 @@ static char sccsid[] = "@(#)svc.c 1.41 87/10/13 Copyr 1984 Sun Micro";
 #include <rpc/pmap_clnt.h>
 #include <errno.h>
 #endif
+#include "xdr_rpc_priv_lists.h"
 #include "xdr_rpc_debug.h"
 #include "rpc/svc.h"
 #include "rpc/svc_auth.h"
 
 
-#ifdef FD_SETSIZE
-static SVCXPRT **xports = NULL;
-#ifdef _WIN32
-//static rpcsocket_t sizeof_xports = FD_SETSIZE;
-static rpcsocket_t sizeof_xports = 0;
-#endif
-#else
-#define NOFILE 32
+CPPUTILS_BEGIN_C
 
-static SVCXPRT *xports[NOFILE];
-#endif /* def FD_SETSIZE */
+CPPUTILS_DLL_PRIVATE struct SVCXPRTPrivListItem* s_xprtsListFirst = CPPUTILS_NULL;
+static struct SVCXPRTPrivListItem* s_xprtsListLast = CPPUTILS_NULL;
+static CinternalPHash_t s_hashXports = CPPUTILS_NULL;
+
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
@@ -95,85 +93,101 @@ static struct svc_callout {
 	void		    (*sc_dispatch)();
 } *svc_head;
 
-static struct svc_callout *svc_find();
+static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout** prev);
+
+static inline void MakeSocketNonBlockingInline(rpcsocket_t a_sock) {
+#ifdef	_WIN32
+	u_long on = 1;
+	ioctlsocket(a_sock, FIONBIO, &on);
+#else
+	int status;
+	if ((status = fcntl(a_sock, F_GETFL, 0)) != -1) {
+		status |= O_NONBLOCK;
+		fcntl(a_sock, F_SETFL, status);
+	}
+#endif
+}
+
+
+static inline SVCXPRT* FindXportFromFdInline(int a_fd) {
+	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports,(void*)((size_t)a_fd),0);
+	if (hashItem) {
+		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->hit.data;
+		return pListItem->xprt;
+	}
+	return CPPUTILS_NULL;
+}
+
+
+static inline void AddXportToHashInline(SVCXPRT* a_xprt) {
+	struct SVCXPRTPrivListItem* pListItem;
+	size_t unHash;
+	register rpcsocket_t sock = a_xprt->xp_sock;
+	const CinternalPHashItem_t hashItem = CInternalPHashFindEx(s_hashXports, (void*)((size_t)sock), 0,&unHash);
+	if (hashItem) {
+		return;
+	}
+
+	pListItem = (struct SVCXPRTPrivListItem*)malloc(sizeof(struct SVCXPRTPrivListItem));
+	if (!pListItem) {
+		XDR_RPC_ERR("malloc returned null!");
+		exit(1);
+	}
+
+	pListItem->xprt = a_xprt;
+	pListItem->prev = s_xprtsListLast;
+	pListItem->next = CPPUTILS_NULL;
+	if (s_xprtsListLast) {
+		s_xprtsListLast->next = pListItem;
+	}
+	else {
+		s_xprtsListFirst = pListItem;
+	}
+	s_xprtsListLast = pListItem;
+
+	pListItem->hashIt = CInternalPHashAddDataWithKnownHashSmlInt(s_hashXports, pListItem, sock, unHash);
+	if (!(pListItem->hashIt)) {
+		free(pListItem);
+		XDR_RPC_ERR("adding to hash failed!");
+		exit(1);
+	}
+}
+
+
+static inline void RemoveXportFromHashInline(SVCXPRT* a_xprt) {
+	register rpcsocket_t sock = a_xprt->xp_sock;
+	const CinternalPHashItem_t hashItem = CInternalPHashFind(s_hashXports, (void*)((size_t)sock), 0);
+	if (hashItem) {
+		struct SVCXPRTPrivListItem* const pListItem = (struct SVCXPRTPrivListItem*)hashItem->hit.data;
+		if (pListItem->next) { pListItem->next->prev = pListItem->prev; }
+		if (pListItem->prev) { pListItem->prev->next = pListItem->next; }
+		if (pListItem == s_xprtsListFirst) { s_xprtsListFirst = pListItem->next; }
+		if (pListItem == s_xprtsListLast) { s_xprtsListLast = pListItem->prev; }
+		CInternalPHashRemoveDataEx(s_hashXports, hashItem);
+		free(pListItem);
+	}
+}
+
 
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
  * Activate a transport handle.
  */
-void
-xprt_register(xprt)
-	SVCXPRT *xprt;
+void xprt_register(SVCXPRT* xprt)
 {
 	register rpcsocket_t sock = xprt->xp_sock;
-
-#ifdef FD_SETSIZE
-	
-#ifdef _WIN32
-	while (sock >= sizeof_xports) {
-		if (sizeof_xports) { sizeof_xports *= 2; }
-		else { sizeof_xports = 1; }
-		xports = (SVCXPRT **)realloc(xports, 2 * sizeof_xports * sizeof(SVCXPRT *));
-		if (!xports) {
-			fprintf(stderr, "realloc returned null!\n");
-			exit(1);
-		}
-	}
-
-
-	if (svc_fdset.fd_count < FD_SETSIZE) {
-		xports[sock] = xprt;
-		FD_SET(sock, &svc_fdset);
-	} else {		
-		XDR_RPC_ERR("too many connections (%d), compilation constant FD_SETSIZE was only %d", (int)sock, FD_SETSIZE);
-	}
-#else
-
-	if (xports == NULL) {
-		xports = (SVCXPRT**)mem_alloc(FD_SETSIZE * sizeof(SVCXPRT*));
-	}
-
-	if (sock < _rpc_dtablesize()) {
-		xports[sock] = xprt;
-		FD_SET(sock, &svc_fdset);
-	}
-#endif
-#else
-	if (sock < NOFILE) {
-		xports[sock] = xprt;
-		svc_fds |= (1 << sock);
-	}
-#endif /* def FD_SETSIZE */
-
+	MakeSocketNonBlockingInline(sock);
+	AddXportToHashInline(xprt);	
 }
 
 /*
  * De-activate a transport handle. 
  */
-void
-xprt_unregister(xprt) 
-	SVCXPRT *xprt;
+void xprt_unregister(SVCXPRT* xprt)
 { 
 	register rpcsocket_t sock = xprt->xp_sock;
-
-#ifdef FD_SETSIZE
-#ifdef _WIN32
-	if ((xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		FD_CLR((unsigned)sock, &svc_fdset);
-#else
-	if ((sock < _rpc_dtablesize()) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		FD_CLR(sock, &svc_fdset);
-#endif
-	}
-#else
-	if ((sock < NOFILE) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		svc_fds &= ~(1 << sock);
-	}
-#endif /* def FD_SETSIZE */
+	RemoveXportFromHashInline(xprt);
 }
 
 
@@ -245,11 +259,7 @@ svc_unregister(prog, vers)
  * Search the callout list for a program number, return the callout
  * struct.
  */
-static struct svc_callout *
-svc_find(prog, vers, prev)
-	u_long prog;
-	u_long vers;
-	struct svc_callout **prev;
+static struct svc_callout* svc_find(u_long prog, u_long vers, struct svc_callout**  prev)
 {
 	register struct svc_callout *s, *p;
 
@@ -416,13 +426,10 @@ svcerr_progvers(xprt, low_vers, high_vers)
  * is mallocated in kernel land.
  */
 
-void
-svc_getreq(rdfds)
-	int rdfds;
+void svc_getreq(int rdfds)
 {
-#ifdef FD_SETSIZE
 #ifdef _WIN32
-int i;
+	int i;
 #endif
 	fd_set readfds;
 
@@ -440,116 +447,157 @@ int i;
 	readfds.fds_bits[0] = rdfds;
 #endif
 	svc_getreqset(&readfds);
-#else
-	int readfds = rdfds & svc_fds;
-
-	svc_getreqset(&readfds);
-#endif /* def FD_SETSIZE */
 }
 
-void
-svc_getreqset(readfds)
-#ifdef FD_SETSIZE
-	fd_set *readfds;
+
+static void svc_getreq_common(int fd);
+
+
+CPPUTILS_DLL_PRIVATE void svc_getreq_poll(struct pollfd* pfdp, int pollretval, int a_max_pollfd)
 {
-#else
-	int *readfds;
+	register int fds_found;
+	int i;
+
+	if (pollretval == 0)
+		return;
+
+	for (i = fds_found = 0; i < a_max_pollfd; ++i){
+		register struct pollfd* p = &pfdp[i];
+
+		if (p->fd != -1 && p->revents){
+			/* fd has input waiting */
+			if (p->revents & (POLLERR | POLLHUP | POLLNVAL))
+				xprt_unregister(FindXportFromFdInline((int)p->fd));
+			else
+				svc_getreq_common((int)p->fd);
+
+			if (++fds_found >= pollretval)
+				break;
+		}  //  if (p->fd != -1 && p->revents){
+	}  //  for (i = fds_found = 0; i < a_max_pollfd; ++i){
+}
+
+
+void svc_getreqset(fd_set* readfds)
 {
-    int readfds_local = *readfds;
-#endif /* def FD_SETSIZE */
-	enum xprt_stat stat;
-	struct rpc_msg msg;
-	int prog_found;
-	u_long low_vers;
-	u_long high_vers;
-	struct svc_req r;
-	register SVCXPRT *xprt;
 #ifndef _WIN32
 	register u_long mask;
 	register int bit;
-	register u_long *maskp;
+	register u_long* maskp;
 	register int setsize;
 #endif
 	register int sock;
-	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	u_int i;
+
+#ifdef _WIN32
+	/* Loop through the sockets that have input ready */
+	for (i = 0; i < readfds->fd_count; i++) {
+		sock = (int)readfds->fd_array[i];
+		/* sock has input waiting */
+		svc_getreq_common(sock);
+	}
+#else
+	setsize = _rpc_dtablesize();
+	maskp = (u_long*)readfds->fds_bits;
+	for (sock = 0; sock < setsize; sock += NFDBITS) {
+		for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
+			/* sock has input waiting */
+			svc_getreq_common(sock + bit - 1);
+		}
+	}
+#endif
+}
+
+
+static void svc_getreq_common(int a_fd)
+{
+	struct rpc_msg msg;
+	struct svc_req r;
+	enum xprt_stat stat;
+	int prog_found;
+	u_long low_vers;
+	u_long high_vers;
+	char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
+	register SVCXPRT* const xprt = FindXportFromFdInline(a_fd);
+
+	if (!xprt) {
+		XDR_RPC_ERR("xprt is null");
+		return;
+	}
 
 	msg.rm_call.cb_cred.oa_base = cred_area;
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
-	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
+	r.rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
-#ifdef FD_SETSIZE
-#ifdef _WIN32
-	/* Loop through the sockets that have input ready */
-	for ( i=0; i<readfds->fd_count; i++ ) {
-		sock = (int)readfds->fd_array[i];
-		/* sock has input waiting */
-		xprt = xports[sock];
-#else
-	setsize = _rpc_dtablesize();	
-	maskp = (u_long *)readfds->fds_bits;
-	for (sock = 0; sock < setsize; sock += NFDBITS) {
-	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
-		/* sock has input waiting */
-		xprt = xports[sock + bit - 1];
-#endif
-#else
-	for (sock = 0; readfds_local != 0; sock++, readfds_local >>= 1) {
-	    if ((readfds_local & 1) != 0) {
-		/* sock has input waiting */
-		xprt = xports[sock];
-#endif /* def FD_SETSIZE */
-		/* now receive msgs from xprtprt (support batch calls) */
-		do {
-			if (SVC_RECV(xprt, &msg)) {
+	/* now receive msgs from xprtprt (support batch calls) */
+	do {
+		if (SVC_RECV(xprt, &msg)) {
 
-				/* now find the exported program and call it */
-				register struct svc_callout *s;
-				enum auth_stat why;
+			/* now find the exported program and call it */
+			register struct svc_callout* s;
+			enum auth_stat why;
 
-				r.rq_xprt = xprt;
-				r.rq_prog = msg.rm_call.cb_prog;
-				r.rq_vers = msg.rm_call.cb_vers;
-				r.rq_proc = msg.rm_call.cb_proc;
-				r.rq_cred = msg.rm_call.cb_cred;
-				/* first authenticate the message */
-				if ((why= _authenticate(&r, &msg)) != AUTH_OK) {
-					svcerr_auth(xprt, why);
-					goto call_done;
-				}
-				/* now match message with a registered service*/
-				prog_found = FALSE;
-				low_vers = 0 - 1;
-				high_vers = 0;
-				for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
-					if (s->sc_prog == r.rq_prog) {
-						if (s->sc_vers == r.rq_vers) {
-							(*s->sc_dispatch)(&r, xprt);
-							goto call_done;
-						}  /* found correct version */
-						prog_found = TRUE;
-						if (s->sc_vers < low_vers)
-							low_vers = s->sc_vers;
-						if (s->sc_vers > high_vers)
-							high_vers = s->sc_vers;
-					}   /* found correct program */
-				}
-				/*
-				 * if we got here, the program or version
-				 * is not served ...
-				 */
-				if (prog_found)
-					svcerr_progvers(xprt,
+			r.rq_xprt = xprt;
+			r.rq_prog = msg.rm_call.cb_prog;
+			r.rq_vers = msg.rm_call.cb_vers;
+			r.rq_proc = msg.rm_call.cb_proc;
+			r.rq_cred = msg.rm_call.cb_cred;
+			/* first authenticate the message */
+			if ((why = _authenticate(&r, &msg)) != AUTH_OK) {
+				svcerr_auth(xprt, why);
+				goto call_done;
+			}
+			/* now match message with a registered service*/
+			prog_found = FALSE;
+			low_vers = 0 - 1;
+			high_vers = 0;
+			for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+				if (s->sc_prog == r.rq_prog) {
+					if (s->sc_vers == r.rq_vers) {
+						(*s->sc_dispatch)(&r, xprt);
+						goto call_done;
+					}  /* found correct version */
+					prog_found = TRUE;
+					if (s->sc_vers < low_vers)
+						low_vers = s->sc_vers;
+					if (s->sc_vers > high_vers)
+						high_vers = s->sc_vers;
+				}   /* found correct program */
+			}
+			/*
+			 * if we got here, the program or version
+			 * is not served ...
+			 */
+			if (prog_found)
+				svcerr_progvers(xprt,
 					low_vers, high_vers);
-				else
-					 svcerr_noprog(xprt);
-				/* Fall through to ... */
-			}
-		call_done:
-			if ((stat = SVC_STAT(xprt)) == XPRT_DIED){
-				SVC_DESTROY(xprt);
-				break;
-			}
-		} while (stat == XPRT_MOREREQS);
-	}
+			else
+				svcerr_noprog(xprt);
+			/* Fall through to ... */
+		}
+	call_done:
+		if ((stat = SVC_STAT(xprt)) == XPRT_DIED) {
+			SVC_DESTROY(xprt);
+			break;
+		}
+	} while (stat == XPRT_MOREREQS);
 }
+
+
+static void cleanup_xdr_rpc_svc_c(void)
+{
+}
+
+
+CPPUTILS_C_CODE_INITIALIZER(initialize_xdr_rpc_svc_c){
+
+	s_hashXports = CInternalPHashCreateSmlInt(2048);
+	if (!s_hashXports) {
+		XDR_RPC_ERR("Creation of s_hashXports failed");
+		exit(1);
+	}
+	atexit(&cleanup_xdr_rpc_svc_c);
+}
+
+
+CPPUTILS_END_C

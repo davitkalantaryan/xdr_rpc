@@ -119,14 +119,34 @@ typedef unsigned long rpcport_t;
 #define __P(__a)	__a
 #endif
 
-
+#ifndef caddr_t_defined
 typedef char* caddr_t;
+#define caddr_t_defined
+#endif
+#ifndef u_int_defined
 typedef uint32_t u_int;
+#define u_int_defined
+#endif
+#ifndef u_short_defined
 typedef uint16_t u_short;
+#define u_short_defined
+#endif
+#ifndef u_char_defined
 typedef uint8_t u_char;
+#define u_char_defined
+#endif
+#ifndef __uint32_t_defined
 typedef uint32_t __uint32_t;
+#define __uint32_t_defined
+#endif
+#ifndef uid_t_defined
 typedef uint32_t uid_t;
+#define uid_t_defined
+#endif
+#ifndef gid_t_defined
 typedef uint32_t gid_t;
+#define gid_t_defined
+#endif
 #ifdef _WIN32
 #ifndef pid_t_defined
 #define pid_t_defined
@@ -134,7 +154,9 @@ typedef uint32_t gid_t;
 typedef uint32_t pid_t;
 #endif
 #endif
+#ifndef u_long_defined
 typedef unsigned long u_long;
+#endif
 
 
 #endif /* ndef __TYPES_RPC_HEADER__ */
